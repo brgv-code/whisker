@@ -10,6 +10,9 @@ struct WhiskerApp: App {
             MainView().environment(model).background(WindowOpenerRegistration())
         }
         .windowResizability(.contentMinSize)
+        .windowStyle(.hiddenTitleBar)
+        // Otherwise SwiftUI restores "closed" from the last quit and the app starts with no window.
+        .defaultLaunchBehavior(.presented)
 
         MenuBarExtra("Whisker", systemImage: "computermouse") {
             MenuContent().environment(model)
@@ -22,10 +25,6 @@ struct WhiskerApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static var openMainWindow: OpenWindowAction?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        Self.bringToFront()
-    }
-
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         Self.openMainWindow?(id: "main")
         Self.bringToFront()
@@ -33,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // macOS 14+ may refuse activate() for an app that was not clicked, so the window is also ordered front directly.
-    private static func bringToFront() {
+    static func bringToFront() {
         NSApp.activate()
         DispatchQueue.main.async {
             for window in NSApp.windows where window.canBecomeMain {
@@ -45,11 +44,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 // The delegate has no SwiftUI environment, so the window keeps its open action there for reopen events.
+// Fronting happens here too: at launch the window does not exist yet when the delegate hears about it.
 private struct WindowOpenerRegistration: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Color.clear.onAppear { AppDelegate.openMainWindow = openWindow }
+        Color.clear.onAppear {
+            AppDelegate.openMainWindow = openWindow
+            AppDelegate.bringToFront()
+        }
     }
 }
 

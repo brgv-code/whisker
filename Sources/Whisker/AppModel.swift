@@ -11,7 +11,9 @@ final class AppModel {
     let catalog = DeviceCatalog()
 
     var connected: [ConnectedDevice] = []
-    var selectedDevice: DeviceID?
+    private(set) var selectedDevice: DeviceID?
+    /// Until the user picks a device, selection follows the best match as devices connect one by one.
+    private var hasUserPickedDevice = false
     var hasAccessibility = Permissions.hasAccessibility
     var hasInputMonitoring = Permissions.hasInputMonitoring
     var opensAtLogin = SMAppService.mainApp.status == .enabled
@@ -81,7 +83,7 @@ final class AppModel {
         let monitor = DeviceMonitor { [weak self] devices in
             Task { @MainActor in self?.devicesChanged(devices) }
         }
-        let tap = EventTap(runtime: runtime, devices: monitor) { [weak self] device, button in
+        let tap = EventTap(runtime: runtime, devices: monitor, catalog: catalog) { [weak self] device, button in
             Task { @MainActor in self?.detected(button, on: device) }
         }
         guard tap.start() else { return false }
@@ -89,11 +91,19 @@ final class AppModel {
         return true
     }
 
+    func pick(_ device: DeviceID) {
+        hasUserPickedDevice = true
+        selectedDevice = device
+    }
+
     private func devicesChanged(_ devices: [ConnectedDevice]) {
         connected = devices
-        if selectedDevice == nil {
-            selectedDevice = (devices.first { catalog.profile(for: $0.id) != nil } ?? devices.first)?.id
+        guard !hasUserPickedDevice else { return }
+        // Keyboards with media keys also report as mice, so prefer a device Whisker knows or was set up for.
+        let isKnown = { (device: ConnectedDevice) in
+            self.catalog.profile(for: device.id) != nil || self.store.settings.settings(for: device.id) != nil
         }
+        selectedDevice = (devices.first(where: isKnown) ?? devices.first)?.id
     }
 
     private func detected(_ button: Int, on device: DeviceID?) {

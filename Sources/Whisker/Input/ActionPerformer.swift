@@ -36,6 +36,8 @@ struct ActionPerformer: Sendable {
         else { return }
         event.setIntegerValueField(.mouseEventButtonNumber, value: Int64(number))
         event.setIntegerValueField(.eventSourceUserData, value: Self.syntheticMarker)
+        // Mice that type shortcuts hold a modifier while we replay their button; it must not turn into a modified click.
+        event.flags = []
         event.post(tap: .cghidEventTap)
     }
 
@@ -50,6 +52,9 @@ struct ActionPerformer: Sendable {
         case .spaceRight: postKey(UInt16(kVK_RightArrow), modifiers: .control)
         case .navigateBack: postKey(UInt16(kVK_ANSI_LeftBracket), modifiers: .command)
         case .navigateForward: postKey(UInt16(kVK_ANSI_RightBracket), modifiers: .command)
+        case .nextTab: postKey(UInt16(kVK_Tab), modifiers: .control)
+        case .previousTab: postKey(UInt16(kVK_Tab), modifiers: [.control, .shift])
+        case .toggleFullScreen: postKey(UInt16(kVK_ANSI_F), modifiers: [.control, .command])
         }
     }
 
@@ -95,5 +100,15 @@ struct ActionPerformer: Sendable {
                 timestamp: 0, windowNumber: 0, context: nil, subtype: 8, data1: (code << 16) | state, data2: -1)
             event?.cgEvent?.post(tap: .cghidEventTap)
         }
+    }
+}
+
+extension Modifiers {
+    init(_ flags: CGEventFlags) {
+        self = []
+        if flags.contains(.maskCommand) { insert(.command) }
+        if flags.contains(.maskAlternate) { insert(.option) }
+        if flags.contains(.maskControl) { insert(.control) }
+        if flags.contains(.maskShift) { insert(.shift) }
     }
 }

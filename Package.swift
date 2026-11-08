@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Whisker",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v15)],
     targets: [
         .target(name: "WhiskerCore"),
         .executableTarget(name: "Whisker", dependencies: ["WhiskerCore"]),
