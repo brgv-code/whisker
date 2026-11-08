@@ -1,0 +1,30 @@
+name: Support my mouse
+description: Ask for a profile for a mouse, or share what you found to help write one.
+labels: [mouse-profile]
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Mouse brand and model
+      placeholder: ISY IWN-5000-1
+    validations:
+      required: true
+  - type: input
+    id: device-id
+    attributes:
+      label: Device ID
+      description: Shown next to "Connected" at the top of Whisker, for example 1ea7:0067.
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection
+      options: [USB receiver, Bluetooth, Cable]
+    validations:
+      required: true
+  - type: textarea
+    id: buttons
+    attributes:
+      label: Buttons
+      description: What each button does today and what Detect Button shows for it.
+    validations:
+      required: true
