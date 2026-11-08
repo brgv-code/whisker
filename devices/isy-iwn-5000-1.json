@@ -1,0 +1,11 @@
+{
+  "name": "ISY IWN-5000-1",
+  "devices": ["1ea7:0067"],
+  "buttons": [
+    { "number": 1, "label": "Right click", "position": { "x": 0.7, "y": 0.2 } },
+    { "number": 2, "label": "Wheel click", "position": { "x": 0.525, "y": 0.22 } },
+    { "number": 3, "label": "Back", "position": { "x": 0.1, "y": 0.66 } },
+    { "number": 4, "label": "Forward", "position": { "x": 0.12, "y": 0.56 } }
+  ],
+  "thumbWheel": { "x": 0.1, "y": 0.46 }
+}
