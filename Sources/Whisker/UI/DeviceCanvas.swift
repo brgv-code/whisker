@@ -10,6 +10,8 @@ struct ControlRow: Identifiable, Hashable {
     var control: Control
     var label: String
     var summary: String
+    /// What Default does on this control, shown in summaries and the action list.
+    var defaultTitle = ""
     var position: DeviceProfile.Point?
     var id: Control { control }
 }

@@ -14,7 +14,7 @@ struct ActionPerformer: Sendable {
             postMouseButton(number, isDown: true, at: location)
             postMouseButton(number, isDown: false, at: location)
         case .shortcut(let combo):
-            postKey(combo.keyCode, modifiers: combo.modifiers)
+            postKey(Keystroke(keyCode: combo.keyCode, modifiers: combo.modifiers))
         case .system(let action):
             perform(action)
         case .media(let key):
@@ -42,29 +42,28 @@ struct ActionPerformer: Sendable {
     }
 
     private func perform(_ action: SystemAction) {
-        switch action {
-        case .missionControl:
-            // Opening the app works even when the user turned off the ⌃↑ shortcut.
+        if let keystroke = action.keystroke {
+            postKey(keystroke)
+        } else {
+            // Mission Control: opening the app works even when the user turned off the ⌃↑ shortcut.
             NSWorkspace.shared.open(URL(filePath: "/System/Applications/Mission Control.app"))
-        case .appExpose: postKey(UInt16(kVK_DownArrow), modifiers: .control)
-        case .showDesktop: postKey(UInt16(kVK_F11), modifiers: [])
-        case .spaceLeft: postKey(UInt16(kVK_LeftArrow), modifiers: .control)
-        case .spaceRight: postKey(UInt16(kVK_RightArrow), modifiers: .control)
-        case .navigateBack: postKey(UInt16(kVK_ANSI_LeftBracket), modifiers: .command)
-        case .navigateForward: postKey(UInt16(kVK_ANSI_RightBracket), modifiers: .command)
-        case .nextTab: postKey(UInt16(kVK_Tab), modifiers: .control)
-        case .previousTab: postKey(UInt16(kVK_Tab), modifiers: [.control, .shift])
-        case .toggleFullScreen: postKey(UInt16(kVK_ANSI_F), modifiers: [.control, .command])
         }
     }
 
-    private func postKey(_ keyCode: UInt16, modifiers: Modifiers) {
+    private func postKey(_ keystroke: Keystroke) {
+        postKey(keystroke, isDown: true)
+        postKey(keystroke, isDown: false)
+    }
+
+    func postKey(_ keystroke: Keystroke, isDown: Bool) {
         let source = CGEventSource(stateID: .hidSystemState)
-        for isDown in [true, false] {
-            guard let event = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: isDown) else { return }
-            event.flags = Self.flags(for: keyCode, modifiers: modifiers)
-            event.post(tap: .cghidEventTap)
+        guard let event = CGEvent(keyboardEventSource: source, virtualKey: keystroke.keyCode, keyDown: isDown) else {
+            return
         }
+        event.flags = Self.flags(for: keystroke.keyCode, modifiers: keystroke.modifiers)
+        // The tap now watches keys too, so our own keystrokes must be recognisable.
+        event.setIntegerValueField(.eventSourceUserData, value: Self.syntheticMarker)
+        event.post(tap: .cghidEventTap)
     }
 
     private static let arrowKeys: Set<Int> = [kVK_LeftArrow, kVK_RightArrow, kVK_UpArrow, kVK_DownArrow]

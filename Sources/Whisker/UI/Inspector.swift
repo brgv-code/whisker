@@ -11,7 +11,11 @@ struct Inspector: View {
         Group {
             switch row?.control {
             case .button(let number):
-                ButtonInspector(device: device, button: number, title: row?.label ?? "", scope: scope).id(number)
+                ButtonInspector(
+                    device: device, button: number, title: row?.label ?? "", defaultName: row?.defaultTitle ?? "",
+                    scope: scope
+                )
+                .id(number)
             case .thumbWheel:
                 ThumbWheelInspector(device: device)
             case nil:
@@ -69,6 +73,7 @@ private struct ButtonInspector: View {
     let device: DeviceID
     let button: Int
     let title: String
+    let defaultName: String
     let scope: String?
     @Environment(AppModel.self) private var model
     @State private var slot = Slot.tap
@@ -90,7 +95,7 @@ private struct ButtonInspector: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.title3.weight(.semibold))
-                Text(binding.summary(onButton: button)).foregroundStyle(.secondary)
+                Text(binding.summary(default: defaultName)).foregroundStyle(.secondary)
             }
             if let scope {
                 Toggle("Same as All Apps", isOn: inheritance(scope)).toggleStyle(.switch)
@@ -139,7 +144,7 @@ private struct ButtonInspector: View {
 
     private var defaultTitle: String {
         switch activeSlot {
-        case .tap, .hold, .click: Kind(binding) == .action ? "Default" : "Normal click"
+        case .tap, .hold, .click: "Default (\(defaultName))"
         case .up, .down, .left, .right: "Nothing"
         }
     }

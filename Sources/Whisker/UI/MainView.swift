@@ -68,9 +68,11 @@ private struct ButtonsPane: View {
         let profile = model.catalog.profile(for: device)
         let settings = model.store.deviceSettings(for: device)
         func row(_ number: Int, _ label: String, _ position: DeviceProfile.Point?) -> ControlRow {
-            ControlRow(
+            let defaultTitle = Action.defaultTitle(button: number, profile: profile)
+            return ControlRow(
                 control: .button(number), label: label,
-                summary: settings.binding(for: number, app: scope).summary(onButton: number), position: position)
+                summary: settings.binding(for: number, app: scope).summary(default: defaultTitle),
+                defaultTitle: defaultTitle, position: position)
         }
         var rows = (profile?.buttons ?? []).map { row($0.number, $0.label, $0.position) }
         let listed = Set(profile?.buttons.map(\.number) ?? [])

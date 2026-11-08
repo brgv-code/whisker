@@ -106,7 +106,9 @@ private func settings(_ buttons: [Int: ButtonBinding] = [:]) -> DeviceSettings {
         _ = engine.handle(.button(number: 5, isDown: true), settings: device, app: nil)
         #expect(
             engine.handle(.button(number: 5, isDown: false), settings: device, app: nil)
-                == .suppress([.freezePointer(false), .press(button: 5, isDown: true), .press(button: 5, isDown: false)])
+                == .suppress([
+                    .freezePointer(false), .replay(button: 5, isDown: true), .replay(button: 5, isDown: false),
+                ])
         )
     }
 
@@ -171,6 +173,18 @@ private func settings(_ buttons: [Int: ButtonBinding] = [:]) -> DeviceSettings {
     }
 }
 
+@Suite struct SystemShortcuts {
+    @Test func firmwareShortcutIsRecognisedAsSystemAction() {
+        #expect(SystemAction(Keystroke(keyCode: 123, modifiers: .control)) == .spaceLeft)
+        #expect(SystemAction(Keystroke(keyCode: 3, modifiers: [.control, .command])) == .toggleFullScreen)
+        #expect(SystemAction(Keystroke(keyCode: 0, modifiers: .command)) == nil)
+    }
+
+    @Test func missionControlHasNoShortcut() {
+        #expect(SystemAction.missionControl.keystroke == nil)
+    }
+}
+
 @Suite struct TapOrHold {
     private let device = settings([3: .tapOrHold(tap: .passthrough, hold: .system(action: .previousTab))])
 
@@ -179,7 +193,7 @@ private func settings(_ buttons: [Int: ButtonBinding] = [:]) -> DeviceSettings {
         #expect(engine.handle(.button(number: 3, isDown: true, time: 10), settings: device, app: nil) == .suppress([]))
         #expect(
             engine.handle(.button(number: 3, isDown: false, time: 10.1), settings: device, app: nil)
-                == .suppress([.press(button: 3, isDown: true), .press(button: 3, isDown: false)]))
+                == .suppress([.replay(button: 3, isDown: true), .replay(button: 3, isDown: false)]))
     }
 
     @Test func longPressRunsTheHoldAction() {

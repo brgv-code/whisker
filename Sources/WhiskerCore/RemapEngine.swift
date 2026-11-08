@@ -9,6 +9,8 @@ public enum InputEvent: Equatable, Sendable {
 public enum Effect: Equatable, Sendable {
     case perform(Action)
     case press(button: Int, isDown: Bool)
+    /// The button's own behavior, re-sent because its press was swallowed. For keystroke buttons that is the keystroke.
+    case replay(button: Int, isDown: Bool)
     case freezePointer(Bool)
 }
 
@@ -112,7 +114,7 @@ public struct RemapEngine: Sendable {
     /// Default on a click means the button's own click, replayed because the press was swallowed.
     private static func effects(_ action: Action, replaying button: Int) -> [Effect] {
         guard action == .passthrough else { return [.perform(action)] }
-        return [.press(button: button, isDown: true), .press(button: button, isDown: false)]
+        return [.replay(button: button, isDown: true), .replay(button: button, isDown: false)]
     }
 
     private mutating func scroll(vertical: Double, horizontal: Double, settings: DeviceSettings) -> Decision {

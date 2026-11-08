@@ -15,7 +15,7 @@ final class EventTap: @unchecked Sendable {
     private var tap: CFMachPort?
     private var detectedButton: Int?
     /// Mouse keystrokes currently held, by key code, so the release finds its button even after modifiers lift.
-    private var keyButtonsDown: [UInt16: (button: Int, device: DeviceID)] = [:]
+    private var keyButtonsDown: [UInt16: (button: Int, device: DeviceID, isPassed: Bool)] = [:]
     private var thread: Thread?
 
     init(
@@ -69,10 +69,18 @@ final class EventTap: @unchecked Sendable {
         let state = runtime.snapshot()
 
         if type == .keyDown || type == .keyUp {
-            guard let (input, device) = keyButton(type, event, state) else { return pass }
-            if event.getIntegerValueField(.keyboardEventAutorepeat) != 0 { return nil }
+            let code = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+            if type == .keyDown, event.getIntegerValueField(.keyboardEventAutorepeat) != 0,
+                let held = keyButtonsDown[code]
+            {
+                // Repeats follow the press: a shortcut left on Default keeps repeating, a remapped one stays quiet.
+                return held.isPassed ? pass : nil
+            }
+            guard let (input, device) = keyButton(type, code, event, state) else { return pass }
             let location = CGEvent(source: nil)?.location ?? .zero
-            return process(input, from: device, state: state, at: location, isKey: true) == .swallow ? nil : pass
+            let outcome = process(input, from: device, state: state, at: location, isKey: true)
+            if type == .keyDown { keyButtonsDown[code]?.isPassed = outcome == .pass }
+            return outcome == .swallow ? nil : pass
         }
         guard let input = Self.input(type, event) else { return pass }
         switch process(input, from: devices.lastPointer, state: state, at: event.location, isKey: false) {
@@ -94,21 +102,17 @@ final class EventTap: @unchecked Sendable {
 
     /// Maps a keystroke typed by a mouse's firmware back to the button the profile says produced it.
     private func keyButton(
-        _ type: CGEventType, _ event: CGEvent, _ state: RuntimeState.Snapshot
+        _ type: CGEventType, _ code: UInt16, _ event: CGEvent, _ state: RuntimeState.Snapshot
     ) -> (InputEvent, DeviceID)? {
-        let code = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let time = Double(event.timestamp) / 1_000_000_000
         if type == .keyUp {
             guard let held = keyButtonsDown.removeValue(forKey: code) else { return nil }
             return (.button(number: held.button, isDown: false, time: time), held.device)
         }
-        if let held = keyButtonsDown[code] {
-            return (.button(number: held.button, isDown: true, time: time), held.device)
-        }
         guard state.settings.isEnabled, let device = devices.lastKeyboard,
             let button = catalog.profile(for: device)?.button(sending: code, modifiers: Modifiers(event.flags))
         else { return nil }
-        keyButtonsDown[code] = (button, device)
+        keyButtonsDown[code] = (button, device, false)
         return (.button(number: button, isDown: true, time: time), device)
     }
 
@@ -123,16 +127,12 @@ final class EventTap: @unchecked Sendable {
         let settings = state.settings.isEnabled ? device.flatMap(state.settings.settings(for:)) : nil
         switch engine.handle(input, settings: settings, app: state.frontmostApp) {
         case .pass:
-            // A mouse keystroke left on Default becomes the real button it stands for, never the firmware shortcut.
-            if isKey, case .button(let number, let isDown, _) = input {
-                performer.postMouseButton(number, isDown: isDown, at: location)
-                return .swallow
-            }
             return .pass
         case .scaleScroll(let vertical, let horizontal):
             return .scaleScroll(vertical: vertical, horizontal: horizontal)
         case .suppress(let effects):
-            for effect in effects { apply(effect, at: location) }
+            let replayKeys = isKey ? device.flatMap(catalog.profile(for:)) : nil
+            for effect in effects { apply(effect, at: location, replayingFrom: replayKeys) }
             return .swallow
         }
     }
@@ -151,10 +151,17 @@ final class EventTap: @unchecked Sendable {
         return false
     }
 
-    private func apply(_ effect: Effect, at location: CGPoint) {
+    /// `profile` is set when the input was a mouse keystroke, so a replay re-types that keystroke.
+    private func apply(_ effect: Effect, at location: CGPoint, replayingFrom profile: DeviceProfile?) {
         switch effect {
         case .perform(let action): performer.perform(action, at: location)
         case .press(let button, let isDown): performer.postMouseButton(button, isDown: isDown, at: location)
+        case .replay(let button, let isDown):
+            if let keystroke = profile?.buttons.first(where: { $0.number == button })?.sends {
+                performer.postKey(keystroke, isDown: isDown)
+            } else {
+                performer.postMouseButton(button, isDown: isDown, at: location)
+            }
         case .freezePointer(let isFrozen): CGAssociateMouseAndMouseCursorPosition(isFrozen ? 0 : 1)
         }
     }

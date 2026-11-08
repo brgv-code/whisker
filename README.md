@@ -58,7 +58,7 @@ A profile adds names and a diagram. Profiles live in [`devices/`](devices/), one
 - `devices`: vendor and product ID in hex. Whisker shows them under the mouse name in the sidebar. A model with a receiver and Bluetooth has two.
 - `number`: the macOS button number. 1 is right click, 2 the wheel, 3 back, 4 forward. Use **Detect Button** to find the rest: a button shown as "Button 6" has number 5.
 - `position`: where the hotspot sits on the diagram, 0 to 1 from the top left.
-- `sends` (optional): for a button the mouse firmware turns into a keystroke. `keyCode` is the macOS virtual key code and `modifiers` any of `command`, `option`, `control`, `shift`. Whisker swallows that keystroke and treats it as button `number`.
+- `sends` (optional): for a button the mouse firmware turns into a keystroke. `keyCode` is the macOS virtual key code and `modifiers` any of `command`, `option`, `control`, `shift`. On Default the keystroke goes through untouched, so the mouse keeps doing what it always did. Any other action replaces it.
 
 Run `swift test` before opening a pull request. It checks every profile in `devices/`.
 

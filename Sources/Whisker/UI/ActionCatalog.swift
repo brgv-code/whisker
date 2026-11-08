@@ -95,51 +95,57 @@ extension Action {
         }
     }
 
-    /// What Default means on a given button, so summaries say "Back button" instead of "Default".
-    func title(onButton number: Int) -> String {
-        self == .passthrough ? Action.mouseButton(number: number).title : title
+    /// What Default does on a button: its click, or for a keystroke button what that keystroke does in macOS.
+    static func defaultTitle(button number: Int, profile: DeviceProfile?) -> String {
+        guard let keystroke = profile?.buttons.first(where: { $0.number == number })?.sends else {
+            return mouseButton(number: number).title
+        }
+        return SystemAction(keystroke).map { Action.system(action: $0).title } ?? keystroke.label
+    }
+
+    func title(default defaultTitle: String) -> String {
+        self == .passthrough ? defaultTitle : title
     }
 }
 
 extension ButtonBinding {
-    func summary(onButton number: Int) -> String {
+    func summary(default defaultTitle: String) -> String {
         switch self {
-        case .action(let action): action.title(onButton: number)
-        case .tapOrHold(let tap, let hold): "\(tap.title(onButton: number)) · Hold: \(hold.title(onButton: number))"
+        case .action(let action): action.title(default: defaultTitle)
+        case .tapOrHold(let tap, let hold):
+            "\(tap.title(default: defaultTitle)) · Hold: \(hold.title(default: defaultTitle))"
         case .gesture: "Gesture button"
         }
+    }
+}
+
+extension Keystroke {
+    var label: String {
+        var symbols = ""
+        if modifiers.contains(.control) { symbols += "⌃" }
+        if modifiers.contains(.option) { symbols += "⌥" }
+        if modifiers.contains(.shift) { symbols += "⇧" }
+        if modifiers.contains(.command) { symbols += "⌘" }
+        // Asking the current keyboard layout keeps labels right on non-US layouts.
+        let character = CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true)
+            .flatMap { NSEvent(cgEvent: $0)?.charactersIgnoringModifiers?.uppercased() }
+        return symbols + (KeyCombo.keyNames[Int(keyCode)] ?? character ?? "Key \(keyCode)")
     }
 }
 
 extension KeyCombo {
     init(_ event: NSEvent) {
         var modifiers: Modifiers = []
-        var symbols = ""
         let flags = event.modifierFlags
-        if flags.contains(.control) {
-            modifiers.insert(.control)
-            symbols += "⌃"
-        }
-        if flags.contains(.option) {
-            modifiers.insert(.option)
-            symbols += "⌥"
-        }
-        if flags.contains(.shift) {
-            modifiers.insert(.shift)
-            symbols += "⇧"
-        }
-        if flags.contains(.command) {
-            modifiers.insert(.command)
-            symbols += "⌘"
-        }
-        let key =
-            Self.keyNames[Int(event.keyCode)]
-            ?? event.charactersIgnoringModifiers?.uppercased()
-            ?? "Key \(event.keyCode)"
-        self.init(keyCode: event.keyCode, modifiers: modifiers, label: symbols + key)
+        if flags.contains(.control) { modifiers.insert(.control) }
+        if flags.contains(.option) { modifiers.insert(.option) }
+        if flags.contains(.shift) { modifiers.insert(.shift) }
+        if flags.contains(.command) { modifiers.insert(.command) }
+        let keystroke = Keystroke(keyCode: event.keyCode, modifiers: modifiers)
+        self.init(keyCode: event.keyCode, modifiers: modifiers, label: keystroke.label)
     }
 
-    private static let keyNames: [Int: String] = [
+    fileprivate static let keyNames: [Int: String] = [
         kVK_LeftArrow: "←", kVK_RightArrow: "→", kVK_UpArrow: "↑", kVK_DownArrow: "↓",
         kVK_Return: "↩", kVK_Tab: "⇥", kVK_Space: "Space", kVK_Delete: "⌫", kVK_ForwardDelete: "⌦",
         kVK_Home: "↖", kVK_End: "↘", kVK_PageUp: "⇞", kVK_PageDown: "⇟",
