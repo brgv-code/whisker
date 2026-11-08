@@ -12,7 +12,8 @@ Dependency direction: UI > AppModel > Input/Store > Core. Core never imports App
 
 ## Threads
 
-- The input thread runs the CGEvent tap and the IOHIDManager on one run loop. `RemapEngine` and `DeviceMonitor.lastActive` live only there.
+- The input thread runs the CGEvent tap and the IOHIDManager on one run loop. `RemapEngine`, `DeviceMonitor.lastPointer` and `DeviceMonitor.lastKeyboard` live only there.
+- Keystrokes a mouse's firmware types (profile `sends`) are turned back into `.button` events in `EventTap.keyButton` before they reach the engine, so the engine never knows about keys.
 - The main thread runs the UI and `SettingsStore`.
 - `RuntimeState` is the only shared state: an immutable snapshot behind one lock, written by main, read per event by the input thread.
 
@@ -20,4 +21,4 @@ Dependency direction: UI > AppModel > Input/Store > Core. Core never imports App
 
 1. New behavior on an event: add a case to `Action` or a rule to `RemapEngine`, with a test in `Tests/WhiskerCoreTests`.
 2. New side effect: add it to `ActionPerformer`.
-3. New setting: add it to `DeviceSettings`, then a control in `UI/Editors.swift`.
+3. New setting: add it to `DeviceSettings`, then a control in `UI/Inspector.swift` or `UI/ScrollPane.swift`.

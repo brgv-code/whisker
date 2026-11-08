@@ -7,6 +7,7 @@ Whisker started because the ISY IWN-5000-1 ships with extra buttons and a thumb 
 ## What it does
 
 - **Remap any button** to a keyboard shortcut, Mission Control, App Exposé, Show Desktop, switching desktops, back and forward, media keys, another mouse button, or nothing.
+- **Tap and hold.** One action on a quick press, another when you hold the button, for example back on a tap and previous tab on a hold.
 - **Gesture button.** Hold a button and move the mouse up, down, left or right to run a different action for each direction. A press without moving is a click.
 - **Thumb wheel.** Keep it as sideways scrolling, or turn each notch into an action (volume, switching tabs, anything above).
 - **Scrolling for the mouse only.** Reverse the wheel or change its speed without touching your trackpad's Natural Scrolling.
@@ -17,7 +18,7 @@ Everything runs on your Mac. Whisker never writes to the mouse's own memory.
 
 ## Install
 
-Requires macOS 14 or later and Xcode command line tools.
+Requires macOS 15 or later and Xcode command line tools.
 
 ```sh
 git clone <this repo>
@@ -32,6 +33,8 @@ Whisker lives in the menu bar. On first launch it asks for two permissions in **
 |---|---|
 | Accessibility | To change what buttons and wheels do. |
 | Input Monitoring | To tell which mouse an event came from, so settings for one mouse never affect another. |
+
+Some mice type keyboard shortcuts for their side buttons (the ISY sends `⌃←` for back). To catch those, Whisker looks at every keystroke and acts only on the ones the profile says came from your mouse. It records which device typed, never what was typed, and nothing leaves your Mac.
 
 `bundle.sh` signs with your Apple Development certificate when you have one. With ad-hoc signing macOS forgets both permissions after every rebuild, so you will need to remove and re-add Whisker in System Settings.
 
@@ -55,6 +58,7 @@ A profile adds names and a diagram. Profiles live in [`devices/`](devices/), one
 - `devices`: vendor and product ID in hex. Whisker shows them under the mouse name in the sidebar. A model with a receiver and Bluetooth has two.
 - `number`: the macOS button number. 1 is right click, 2 the wheel, 3 back, 4 forward. Use **Detect Button** to find the rest: a button shown as "Button 6" has number 5.
 - `position`: where the hotspot sits on the diagram, 0 to 1 from the top left.
+- `sends` (optional): for a button the mouse firmware turns into a keystroke. `keyCode` is the macOS virtual key code and `modifiers` any of `command`, `option`, `control`, `shift`. Whisker swallows that keystroke and treats it as button `number`.
 
 Run `swift test` before opening a pull request. It checks every profile in `devices/`.
 
@@ -74,6 +78,7 @@ The remapping logic lives in `Sources/WhiskerCore` and has no macOS UI dependenc
 - Remapping happens on the Mac, so it only works while Whisker runs. DPI and polling rate live in the mouse firmware and are not supported.
 - macOS does not say which mouse sent an event, so Whisker follows the mouse that moved last. Switching mice and clicking within the same instant can apply the wrong mouse's settings to that one click.
 - Buttons the mouse handles internally (often the DPI button) never reach macOS and cannot be remapped.
+- Tap or hold is decided when you let go, so the hold action runs on release rather than while you are still holding.
 
 ## License
 
