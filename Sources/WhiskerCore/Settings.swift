@@ -56,6 +56,7 @@ public struct GestureBindings: Hashable, Codable, Sendable {
 
 public enum ButtonBinding: Hashable, Codable, Sendable {
     case action(Action)
+    case tapOrHold(tap: Action, hold: Action)
     case gesture(GestureBindings)
 }
 

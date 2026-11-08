@@ -2,10 +2,20 @@
   "name": "ISY IWN-5000-1",
   "devices": ["1ea7:0067"],
   "buttons": [
-    { "number": 1, "label": "Right click", "position": { "x": 0.7, "y": 0.2 } },
+    { "number": 1, "label": "Right click", "position": { "x": 0.72, "y": 0.2 } },
     { "number": 2, "label": "Wheel click", "position": { "x": 0.525, "y": 0.22 } },
-    { "number": 3, "label": "Back", "position": { "x": 0.1, "y": 0.66 } },
-    { "number": 4, "label": "Forward", "position": { "x": 0.12, "y": 0.56 } }
+    {
+      "number": 3, "label": "Back", "position": { "x": 0.1, "y": 0.66 },
+      "sends": { "keyCode": 123, "modifiers": ["control"] }
+    },
+    {
+      "number": 4, "label": "Forward", "position": { "x": 0.12, "y": 0.56 },
+      "sends": { "keyCode": 124, "modifiers": ["control"] }
+    },
+    {
+      "number": 5, "label": "Thumb button", "position": { "x": 0.09, "y": 0.8 },
+      "sends": { "keyCode": 3, "modifiers": ["control", "command"] }
+    }
   ],
   "thumbWheel": { "x": 0.1, "y": 0.46 }
 }

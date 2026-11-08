@@ -1,5 +1,6 @@
 public enum InputEvent: Equatable, Sendable {
-    case button(number: Int, isDown: Bool)
+    /// `time` is in seconds on any monotonic clock; only tap-or-hold bindings read it.
+    case button(number: Int, isDown: Bool, time: Double = 0)
     case moved(dx: Double, dy: Double)
     /// Deltas in lines. Trackpads and Magic Mouse report continuous scrolls.
     case scroll(vertical: Double, horizontal: Double, isContinuous: Bool)
@@ -20,6 +21,7 @@ public enum Decision: Equatable, Sendable {
 /// Decides what happens to each pointer event. Confined to the input thread, so it holds plain state.
 public struct RemapEngine: Sendable {
     public static let gestureThreshold = 40.0
+    public static let holdThreshold = 0.4
 
     private struct Gesture: Sendable {
         var button: Int
@@ -29,6 +31,7 @@ public struct RemapEngine: Sendable {
 
     // Bindings resolved at press time, so a release still matches if the front app changes mid-click.
     private var held: [Int: ButtonBinding] = [:]
+    private var pressedAt: [Int: Double] = [:]
     private var gesture: Gesture?
     private var thumbTravel = 0.0
 
@@ -36,11 +39,11 @@ public struct RemapEngine: Sendable {
 
     public mutating func handle(_ event: InputEvent, settings: DeviceSettings?, app: String?) -> Decision {
         switch event {
-        case .button(let number, isDown: false):
-            return release(number)
-        case .button(let number, isDown: true):
+        case .button(let number, isDown: false, let time):
+            return release(number, at: time)
+        case .button(let number, isDown: true, let time):
             guard let settings else { return .pass }
-            return press(number, binding: settings.binding(for: number, app: app))
+            return press(number, binding: settings.binding(for: number, app: app), at: time)
         case .moved(let dx, let dy):
             guard gesture != nil else { return .pass }
             gesture?.dx += dx
@@ -52,7 +55,7 @@ public struct RemapEngine: Sendable {
         }
     }
 
-    private mutating func press(_ number: Int, binding: ButtonBinding) -> Decision {
+    private mutating func press(_ number: Int, binding: ButtonBinding, at time: Double) -> Decision {
         switch binding {
         case .action(.passthrough):
             return .pass
@@ -63,6 +66,10 @@ public struct RemapEngine: Sendable {
             case .disabled: return .suppress([])
             default: return .suppress([.perform(action)])
             }
+        case .tapOrHold:
+            held[number] = binding
+            pressedAt[number] = time
+            return .suppress([])
         case .gesture:
             held[number] = binding
             gesture = Gesture(button: number)
@@ -70,13 +77,16 @@ public struct RemapEngine: Sendable {
         }
     }
 
-    private mutating func release(_ number: Int) -> Decision {
+    private mutating func release(_ number: Int, at time: Double) -> Decision {
         guard let binding = held.removeValue(forKey: number) else { return .pass }
         switch binding {
         case .action(.mouseButton(let target)):
             return .suppress([.press(button: target, isDown: false)])
         case .action:
             return .suppress([])
+        case .tapOrHold(let tap, let hold):
+            let duration = time - (pressedAt.removeValue(forKey: number) ?? time)
+            return .suppress(Self.effects(duration >= Self.holdThreshold ? hold : tap, replaying: number))
         case .gesture(let bindings):
             let travel = gesture ?? Gesture(button: number)
             gesture = nil
@@ -95,10 +105,14 @@ public struct RemapEngine: Sendable {
             // Screen coordinates grow downward.
             action = travel.dy < 0 ? bindings.up : bindings.down
         }
-        if isClick, action == .passthrough {
-            return [.press(button: travel.button, isDown: true), .press(button: travel.button, isDown: false)]
-        }
+        if isClick { return Self.effects(action, replaying: travel.button) }
         return action == .passthrough ? [] : [.perform(action)]
+    }
+
+    /// Default on a click means the button's own click, replayed because the press was swallowed.
+    private static func effects(_ action: Action, replaying button: Int) -> [Effect] {
+        guard action == .passthrough else { return [.perform(action)] }
+        return [.press(button: button, isDown: true), .press(button: button, isDown: false)]
     }
 
     private mutating func scroll(vertical: Double, horizontal: Double, settings: DeviceSettings) -> Decision {

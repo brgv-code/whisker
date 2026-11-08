@@ -170,3 +170,32 @@ private func settings(_ buttons: [Int: ButtonBinding] = [:]) -> DeviceSettings {
         )
     }
 }
+
+@Suite struct TapOrHold {
+    private let device = settings([3: .tapOrHold(tap: .passthrough, hold: .system(action: .previousTab))])
+
+    @Test func quickPressReplaysTheButton() {
+        var engine = RemapEngine()
+        #expect(engine.handle(.button(number: 3, isDown: true, time: 10), settings: device, app: nil) == .suppress([]))
+        #expect(
+            engine.handle(.button(number: 3, isDown: false, time: 10.1), settings: device, app: nil)
+                == .suppress([.press(button: 3, isDown: true), .press(button: 3, isDown: false)]))
+    }
+
+    @Test func longPressRunsTheHoldAction() {
+        var engine = RemapEngine()
+        _ = engine.handle(.button(number: 3, isDown: true, time: 10), settings: device, app: nil)
+        #expect(
+            engine.handle(.button(number: 3, isDown: false, time: 10.5), settings: device, app: nil)
+                == .suppress([.perform(.system(action: .previousTab))]))
+    }
+
+    @Test func tapCanRunAnAction() {
+        let device = settings([3: .tapOrHold(tap: .system(action: .navigateBack), hold: .passthrough)])
+        var engine = RemapEngine()
+        _ = engine.handle(.button(number: 3, isDown: true, time: 0), settings: device, app: nil)
+        #expect(
+            engine.handle(.button(number: 3, isDown: false, time: 0.05), settings: device, app: nil)
+                == .suppress([.perform(.system(action: .navigateBack))]))
+    }
+}

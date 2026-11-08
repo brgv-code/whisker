@@ -1,4 +1,4 @@
-public struct Modifiers: OptionSet, Hashable, Codable, Sendable {
+public struct Modifiers: OptionSet, Hashable, Sendable {
     public let rawValue: Int
     public init(rawValue: Int) { self.rawValue = rawValue }
 
@@ -6,6 +6,29 @@ public struct Modifiers: OptionSet, Hashable, Codable, Sendable {
     public static let option = Modifiers(rawValue: 1 << 1)
     public static let control = Modifiers(rawValue: 1 << 2)
     public static let shift = Modifiers(rawValue: 1 << 3)
+
+    private static let names: [(String, Modifiers)] = [
+        ("command", .command), ("option", .option), ("control", .control), ("shift", .shift),
+    ]
+}
+
+/// Coded as names, so device profiles stay readable: `["control", "command"]`.
+extension Modifiers: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self = []
+        for name in try container.decode([String].self) {
+            guard let modifier = Self.names.first(where: { $0.0 == name })?.1 else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unknown modifier \(name)")
+            }
+            insert(modifier)
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(Self.names.filter { contains($0.1) }.map(\.0))
+    }
 }
 
 public struct KeyCombo: Hashable, Codable, Sendable {
@@ -23,6 +46,7 @@ public struct KeyCombo: Hashable, Codable, Sendable {
 
 public enum SystemAction: String, Hashable, Codable, Sendable, CaseIterable {
     case missionControl, appExpose, showDesktop, spaceLeft, spaceRight, navigateBack, navigateForward
+    case nextTab, previousTab, toggleFullScreen
 }
 
 public enum MediaKey: String, Hashable, Codable, Sendable, CaseIterable {
