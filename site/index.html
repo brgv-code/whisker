@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whisker</title>
+  <meta name="description" content="A free, open source macOS app that remaps the buttons, wheels and gestures of any mouse.">
+  <meta property="og:title" content="Whisker">
+  <meta property="og:description" content="Remap the buttons, wheels and gestures of any mouse on macOS. Free and open source.">
+  <meta property="og:image" content="https://whisker.bhargav.dev/screenshot.png">
+  <meta property="og:url" content="https://whisker.bhargav.dev">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='8' y='3' width='16' height='26' rx='8' fill='%23222'/%3E%3Crect x='15' y='7' width='2' height='6' rx='1' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fbfbfa;
+      --surface: #ffffff;
+      --text: #17181a;
+      --muted: #5d6066;
+      --line: #e6e6e3;
+      --accent: #2f6df6;
+      --accent-text: #ffffff;
+      --code-bg: #f2f2ef;
+      --shadow: 0 30px 60px -20px rgba(20, 22, 30, 0.35);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0f1012;
+        --surface: #17181b;
+        --text: #ececec;
+        --muted: #9a9ca3;
+        --line: #26282c;
+        --accent: #5b8cff;
+        --accent-text: #0b0c0e;
+        --code-bg: #1c1d21;
+        --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0f1012;
+      --surface: #17181b;
+      --text: #ececec;
+      --muted: #9a9ca3;
+      --line: #26282c;
+      --accent: #5b8cff;
+      --accent-text: #0b0c0e;
+      --code-bg: #1c1d21;
+      --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    a { color: inherit; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; }
+    .brand svg { width: 22px; height: 22px; }
+    nav .links { display: flex; gap: 22px; font-size: 15px; }
+    nav .links a { color: var(--muted); text-decoration: none; }
+    nav .links a:hover { color: var(--text); }
+
+    .hero { text-align: center; padding: 64px 0 40px; }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 60px);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      margin: 0 auto 20px;
+      max-width: 820px;
+    }
+    .hero p { color: var(--muted); font-size: 19px; max-width: 620px; margin: 0 auto 32px; }
+    .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+    .button svg { width: 18px; height: 18px; }
+    .meta { margin-top: 18px; color: var(--muted); font-size: 14px; }
+
+    .shot { margin: 40px auto 0; max-width: 1000px; }
+    .shot img { width: 100%; height: auto; display: block; filter: drop-shadow(var(--shadow)); }
+
+    section { padding: 88px 0 0; }
+    h2 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 12px; }
+    .lead { color: var(--muted); max-width: 640px; margin: 0 0 36px; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .card h3 { font-size: 17px; margin: 0 0 6px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    pre {
+      margin: 0;
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    ol.steps { margin: 0; padding-left: 20px; color: var(--muted); }
+    ol.steps li { margin-bottom: 10px; }
+    ol.steps strong { color: var(--text); }
+    code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.88em; white-space: nowrap; }
+    pre code { white-space: pre; }
+
+    footer {
+      margin-top: 100px;
+      padding: 28px 0 40px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    @media (max-width: 820px) {
+      .grid { grid-template-columns: 1fr; }
+      .split { grid-template-columns: 1fr; }
+      nav .links a.hide-small { display: none; }
+      .hero { padding-top: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="/">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="8" y="3" width="16" height="26" rx="8" fill="currentColor"/><rect x="15" y="7" width="2" height="6" rx="1" fill="var(--bg)"/></svg>
+        Whisker
+      </a>
+      <div class="links">
+        <a class="hide-small" href="#features">Features</a>
+        <a class="hide-small" href="#install">Install</a>
+        <a href="https://github.com/brgv-code/whisker">GitHub</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <h1>Make every button on your mouse do what you want.</h1>
+      <p>Whisker is a free, open source macOS app that remaps the buttons, wheels and gestures of any mouse. Made for the mice that ship without software.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/brgv-code/whisker">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+        <a class="button" href="#install">Build from source</a>
+      </div>
+      <div class="meta">macOS 15 or later · MIT licensed</div>
+    </header>
+
+    <div class="shot">
+      <img src="screenshot.png" width="1800" height="1228" alt="Whisker showing an ISY IWN-5000-1 with labels pointing at each button and what it does">
+    </div>
+
+    <section id="features">
+      <h2>Everything Logitech Options does, for the mouse you already have</h2>
+      <p class="lead">Pick a button on the drawing, choose what it does, done. Settings apply right away and stay with that mouse.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Remap any button</h3>
+          <p>Keyboard shortcuts, Mission Control, switching desktops, back and forward, tabs, full screen, media keys, another mouse button, or nothing.</p>
+        </div>
+        <div class="card">
+          <h3>Tap and hold</h3>
+          <p>One action on a quick press and another on a hold. Go back on a tap, switch to the previous tab on a hold.</p>
+        </div>
+        <div class="card">
+          <h3>Gesture button</h3>
+          <p>Hold a button and move the mouse up, down, left or right. Each direction runs its own action.</p>
+        </div>
+        <div class="card">
+          <h3>Thumb wheel</h3>
+          <p>Scroll sideways, or turn each notch into an action like volume or switching tabs.</p>
+        </div>
+        <div class="card">
+          <h3>Per-app settings</h3>
+          <p>Give a button a different job in your browser than everywhere else. Add an app with one click.</p>
+        </div>
+        <div class="card">
+          <h3>Scrolling for the mouse only</h3>
+          <p>Reverse the wheel or change its speed without touching your trackpad's Natural Scrolling.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="mice">
+      <div class="split">
+        <div>
+          <h2>Works with your mouse</h2>
+          <p class="lead">Any mouse works out of the box: click Detect Button, press a button, and it shows up. A small profile file adds names, a spot on the drawing, and support for side buttons that secretly type keyboard shortcuts.</p>
+          <a class="button" href="https://github.com/brgv-code/whisker/blob/main/CONTRIBUTING.md">Add a profile for your mouse</a>
+        </div>
+        <pre><code>{
+  "name": "ISY IWN-5000-1",
+  "devices": ["1ea7:0067"],
+  "buttons": [
+    { "number": 3, "label": "Back",
+      "position": { "x": 0.1, "y": 0.66 },
+      "sends": { "keyCode": 123,
+                 "modifiers": ["control"] } }
+  ]
+}</code></pre>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="split">
+        <div>
+          <h2>Install</h2>
+          <p class="lead">There is no signed download yet, so build it from source. It takes about a minute.</p>
+          <ol class="steps">
+            <li>Install the Xcode command line tools with <code>xcode-select --install</code>.</li>
+            <li>Run these four commands in Terminal.</li>
+            <li>Grant <strong>Accessibility</strong> and <strong>Input Monitoring</strong> when Whisker asks. It needs them to change what your buttons do and to tell your mice apart.</li>
+          </ol>
+        </div>
+        <pre><code>git clone https://github.com/brgv-code/whisker.git
+cd whisker
+./scripts/bundle.sh
+open build/Whisker.app</code></pre>
+      </div>
+    </section>
+
+    <section id="privacy">
+      <h2>Stays on your Mac</h2>
+      <p class="lead">Whisker has no network code. It never writes to the mouse's memory and never records what you type: it only notes which device sent a keystroke so it can catch the ones your mouse types for its side buttons.</p>
+    </section>
+
+    <footer>
+      <span>MIT licensed. Made by <a href="https://bhargav.dev">Bhargav</a>.</span>
+      <a href="https://github.com/brgv-code/whisker">github.com/brgv-code/whisker</a>
+    </footer>
+  </div>
+</body>
+</html>
