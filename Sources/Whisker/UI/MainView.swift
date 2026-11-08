@@ -138,7 +138,8 @@ private struct Header: View {
             .fixedSize()
             HStack(spacing: 5) {
                 Circle().fill(isConnected ? Color.green : Color.secondary).frame(width: 7, height: 7)
-                Text(isConnected ? "Connected" : "Not connected").font(.caption).foregroundStyle(.secondary)
+                Text("\(isConnected ? "Connected" : "Not connected") · \(device.id.description)").font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
             AppChips(device: device.id, scope: $scope)
