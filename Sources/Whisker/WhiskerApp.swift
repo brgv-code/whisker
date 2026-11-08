@@ -11,7 +11,6 @@ struct WhiskerApp: App {
         }
         .windowResizability(.contentMinSize)
         .windowStyle(.hiddenTitleBar)
-        // Otherwise SwiftUI restores "closed" from the last quit and the app starts with no window.
         .defaultLaunchBehavior(.presented)
 
         MenuBarExtra("Whisker", systemImage: "computermouse") {
@@ -20,7 +19,6 @@ struct WhiskerApp: App {
     }
 }
 
-/// Menu bar apps never activate on their own, so launch and `open` must bring the window forward explicitly.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static var openMainWindow: OpenWindowAction?
@@ -31,7 +29,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
-    // macOS 14+ may refuse activate() for an app that was not clicked, so the window is also ordered front directly.
     static func bringToFront() {
         NSApp.activate()
         DispatchQueue.main.async {
@@ -43,8 +40,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// The delegate has no SwiftUI environment, so the window keeps its open action there for reopen events.
-// Fronting happens here too: at launch the window does not exist yet when the delegate hears about it.
 private struct WindowOpenerRegistration: View {
     @Environment(\.openWindow) private var openWindow
 

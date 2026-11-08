@@ -2,7 +2,6 @@ import CoreGraphics
 import Foundation
 import WhiskerCore
 
-/// Owns the input thread: the CGEvent tap and the HID monitor both run on its run loop.
 final class EventTap: @unchecked Sendable {
     private let runtime: RuntimeState
     private let devices: DeviceMonitor
@@ -10,11 +9,9 @@ final class EventTap: @unchecked Sendable {
     private let performer = ActionPerformer()
     private let onDetect: @Sendable (DeviceID?, Int) -> Void
 
-    // Confined to the input thread.
     private var engine = RemapEngine()
     private var tap: CFMachPort?
     private var detectedButton: Int?
-    /// Mouse keystrokes currently held, by key code, so the release finds its button even after modifiers lift.
     private var keyButtonsDown: [UInt16: (button: Int, device: DeviceID, isPassed: Bool)] = [:]
     private var thread: Thread?
 
@@ -28,7 +25,6 @@ final class EventTap: @unchecked Sendable {
         self.onDetect = onDetect
     }
 
-    /// Returns false when macOS refuses the tap, which means Accessibility is not granted yet.
     func start() -> Bool {
         let mask = [
             CGEventType.rightMouseDown, .rightMouseUp, .otherMouseDown, .otherMouseUp,
@@ -45,7 +41,6 @@ final class EventTap: @unchecked Sendable {
         else { return false }
         self.tap = tap
 
-        // Own thread, not main: a busy UI must never stall the cursor or make macOS disable the tap.
         let thread = Thread { [self] in
             let runLoop = CFRunLoopGetCurrent()
             CFRunLoopAddSource(runLoop, CFMachPortCreateRunLoopSource(nil, self.tap, 0), .commonModes)
@@ -73,7 +68,6 @@ final class EventTap: @unchecked Sendable {
             if type == .keyDown, event.getIntegerValueField(.keyboardEventAutorepeat) != 0,
                 let held = keyButtonsDown[code]
             {
-                // Repeats follow the press: a shortcut left on Default keeps repeating, a remapped one stays quiet.
                 return held.isPassed ? pass : nil
             }
             guard let (input, device) = keyButton(type, code, event, state) else { return pass }
@@ -100,7 +94,6 @@ final class EventTap: @unchecked Sendable {
         case scaleScroll(vertical: Double, horizontal: Double)
     }
 
-    /// Maps a keystroke typed by a mouse's firmware back to the button the profile says produced it.
     private func keyButton(
         _ type: CGEventType, _ code: UInt16, _ event: CGEvent, _ state: RuntimeState.Snapshot
     ) -> (InputEvent, DeviceID)? {
@@ -123,7 +116,6 @@ final class EventTap: @unchecked Sendable {
             if detect(number, isDown: isDown, on: device) { return .swallow }
             if !isKey { return .pass }
         }
-        // Disabled still runs the engine with no settings, so a gesture held across the toggle releases the pointer.
         let settings = state.settings.isEnabled ? device.flatMap(state.settings.settings(for:)) : nil
         switch engine.handle(input, settings: settings, app: state.frontmostApp) {
         case .pass:
@@ -137,7 +129,6 @@ final class EventTap: @unchecked Sendable {
         }
     }
 
-    /// Swallows the press and its matching release, so detecting a button does not also click it.
     private func detect(_ number: Int, isDown: Bool, on device: DeviceID?) -> Bool {
         if isDown, detectedButton == nil {
             detectedButton = number
@@ -151,7 +142,6 @@ final class EventTap: @unchecked Sendable {
         return false
     }
 
-    /// `profile` is set when the input was a mouse keystroke, so a replay re-types that keystroke.
     private func apply(_ effect: Effect, at location: CGPoint, replayingFrom profile: DeviceProfile?) {
         switch effect {
         case .perform(let action): performer.perform(action, at: location)
@@ -186,7 +176,6 @@ final class EventTap: @unchecked Sendable {
         }
     }
 
-    // Apps read different fields (lines, fixed point, pixels), so all three are scaled together.
     private static func scale(_ event: CGEvent, vertical: Double, horizontal: Double) {
         let axes: [(CGEventField, CGEventField, CGEventField, Double)] = [
             (
@@ -201,7 +190,6 @@ final class EventTap: @unchecked Sendable {
         for (lineField, fixedField, pointField, factor) in axes {
             let lines = Double(event.getIntegerValueField(lineField))
             var scaledLines = (lines * factor).rounded()
-            // Keep slow speeds from rounding a real notch down to nothing.
             if scaledLines == 0, lines != 0 { scaledLines = lines * factor < 0 ? -1 : 1 }
             event.setIntegerValueField(lineField, value: Int64(scaledLines))
             event.setDoubleValueField(fixedField, value: event.getDoubleValueField(fixedField) * factor)

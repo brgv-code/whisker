@@ -3,7 +3,6 @@ import Observation
 import ServiceManagement
 import WhiskerCore
 
-/// Wires the input thread, settings and UI together. The one place that does orchestration.
 @MainActor @Observable
 final class AppModel {
     let runtime = RuntimeState()
@@ -12,14 +11,11 @@ final class AppModel {
 
     var connected: [ConnectedDevice] = []
     private(set) var selectedDevice: DeviceID?
-    /// Until the user picks a device, selection follows the best match as devices connect one by one.
     private var hasUserPickedDevice = false
     var hasAccessibility = Permissions.hasAccessibility
     var hasInputMonitoring = Permissions.hasInputMonitoring
     var opensAtLogin = SMAppService.mainApp.status == .enabled
-    /// Buttons found with Detect this session that have no profile entry or binding yet.
     var detectedButtons: [DeviceID: Set<Int>] = [:]
-    /// Bumped on each detection so the open device view can select the button.
     var lastDetection: (device: DeviceID, button: Int)?
     var isDetecting = false {
         didSet {
@@ -65,7 +61,6 @@ final class AppModel {
 
     private func startWhenPermitted() {
         if startInputIfPossible() { return }
-        // Permissions are granted in System Settings while the app runs, so poll until both arrive.
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, self.startInputIfPossible() else { return }
@@ -99,7 +94,6 @@ final class AppModel {
     private func devicesChanged(_ devices: [ConnectedDevice]) {
         connected = devices
         guard !hasUserPickedDevice else { return }
-        // Keyboards with media keys also report as mice, so prefer a device Whisker knows or was set up for.
         let isKnown = { (device: ConnectedDevice) in
             self.catalog.profile(for: device.id) != nil || self.store.settings.settings(for: device.id) != nil
         }

@@ -10,7 +10,6 @@ enum Permissions {
     }
 
     static func requestAccessibility() {
-        // String literal: the imported kAXTrustedCheckOptionPrompt global is not concurrency safe.
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
     }
 

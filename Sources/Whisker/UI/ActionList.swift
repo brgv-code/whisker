@@ -3,7 +3,6 @@ import Carbon.HIToolbox
 import SwiftUI
 import WhiskerCore
 
-/// Every assignable action as an icon list; the selected one is checked.
 struct ActionList: View {
     @Binding var action: Action
     var defaultTitle = "Default"

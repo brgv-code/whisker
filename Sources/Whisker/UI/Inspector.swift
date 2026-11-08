@@ -1,7 +1,6 @@
 import SwiftUI
 import WhiskerCore
 
-/// The right-hand panel: how the selected control behaves.
 struct Inspector: View {
     let device: DeviceID
     let row: ControlRow?
@@ -82,7 +81,6 @@ private struct ButtonInspector: View {
     private var binding: ButtonBinding { settings.binding(for: button, app: scope) }
     private var isInherited: Bool { scope.map { settings.appOverrides[$0]?[button] == nil } ?? false }
 
-    /// The slot the action list edits, corrected when the binding kind no longer has the chosen slot.
     private var activeSlot: Slot {
         switch Kind(binding) {
         case .action: .tap

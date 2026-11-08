@@ -1,15 +1,12 @@
 public enum InputEvent: Equatable, Sendable {
-    /// `time` is in seconds on any monotonic clock; only tap-or-hold bindings read it.
     case button(number: Int, isDown: Bool, time: Double = 0)
     case moved(dx: Double, dy: Double)
-    /// Deltas in lines. Trackpads and Magic Mouse report continuous scrolls.
     case scroll(vertical: Double, horizontal: Double, isContinuous: Bool)
 }
 
 public enum Effect: Equatable, Sendable {
     case perform(Action)
     case press(button: Int, isDown: Bool)
-    /// The button's own behavior, re-sent because its press was swallowed. For keystroke buttons that is the keystroke.
     case replay(button: Int, isDown: Bool)
     case freezePointer(Bool)
 }
@@ -20,7 +17,6 @@ public enum Decision: Equatable, Sendable {
     case suppress([Effect])
 }
 
-/// Decides what happens to each pointer event. Confined to the input thread, so it holds plain state.
 public struct RemapEngine: Sendable {
     public static let gestureThreshold = 40.0
     public static let holdThreshold = 0.4
@@ -31,7 +27,6 @@ public struct RemapEngine: Sendable {
         var dy = 0.0
     }
 
-    // Bindings resolved at press time, so a release still matches if the front app changes mid-click.
     private var held: [Int: ButtonBinding] = [:]
     private var pressedAt: [Int: Double] = [:]
     private var gesture: Gesture?
@@ -104,14 +99,12 @@ public struct RemapEngine: Sendable {
         } else if abs(travel.dx) > abs(travel.dy) {
             action = travel.dx < 0 ? bindings.left : bindings.right
         } else {
-            // Screen coordinates grow downward.
             action = travel.dy < 0 ? bindings.up : bindings.down
         }
         if isClick { return Self.effects(action, replaying: travel.button) }
         return action == .passthrough ? [] : [.perform(action)]
     }
 
-    /// Default on a click means the button's own click, replayed because the press was swallowed.
     private static func effects(_ action: Action, replaying button: Int) -> [Effect] {
         guard action == .passthrough else { return [.perform(action)] }
         return [.replay(button: button, isDown: true), .replay(button: button, isDown: false)]
@@ -119,7 +112,6 @@ public struct RemapEngine: Sendable {
 
     private mutating func scroll(vertical: Double, horizontal: Double, settings: DeviceSettings) -> Decision {
         if case .actions(let left, let right) = settings.thumbWheel, horizontal != 0 {
-            // macOS reports positive horizontal deltas for leftward scrolls.
             thumbTravel += horizontal
             var effects: [Effect] = []
             while thumbTravel >= 1 {

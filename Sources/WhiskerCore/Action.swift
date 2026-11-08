@@ -12,7 +12,6 @@ public struct Modifiers: OptionSet, Hashable, Sendable {
     ]
 }
 
-/// Coded as names, so device profiles stay readable: `["control", "command"]`.
 extension Modifiers: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -34,7 +33,6 @@ extension Modifiers: Codable {
 public struct KeyCombo: Hashable, Codable, Sendable {
     public var keyCode: UInt16
     public var modifiers: Modifiers
-    // Captured at record time so the core never needs keyboard layout APIs.
     public var label: String
 
     public init(keyCode: UInt16, modifiers: Modifiers, label: String) {
@@ -58,9 +56,7 @@ public enum SystemAction: String, Hashable, Codable, Sendable, CaseIterable {
     case missionControl, appExpose, showDesktop, spaceLeft, spaceRight, navigateBack, navigateForward
     case nextTab, previousTab, toggleFullScreen
 
-    /// The default macOS shortcut for the action, or nil when it is triggered another way.
     public var keystroke: Keystroke? {
-        // Virtual key codes from Carbon's Events.h, kept here so the core stays free of Carbon.
         switch self {
         case .missionControl: nil
         case .appExpose: Keystroke(keyCode: 125, modifiers: .control)
@@ -75,7 +71,6 @@ public enum SystemAction: String, Hashable, Codable, Sendable, CaseIterable {
         }
     }
 
-    /// Names a keystroke a mouse types, so the UI can say "Desktop on the left" rather than "⌃←".
     public init?(_ keystroke: Keystroke) {
         guard let match = Self.allCases.first(where: { $0.keystroke == keystroke }) else { return nil }
         self = match

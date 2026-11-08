@@ -7,10 +7,7 @@ struct ConnectedDevice: Hashable, Identifiable, Sendable {
     var name: String
 }
 
-/// Watches HID devices. CGEvents do not say which device sent them, so this tracks the last mouse that moved
-/// and the last keyboard interface that typed (some mice type shortcuts through one).
 final class DeviceMonitor: @unchecked Sendable {
-    // Confined to the input thread: only touched from callbacks on the run loop it was scheduled on.
     private(set) var lastPointer: DeviceID?
     private(set) var lastKeyboard: DeviceID?
     private var pointers: [ObjectIdentifier: ConnectedDevice] = [:]
@@ -59,7 +56,6 @@ final class DeviceMonitor: @unchecked Sendable {
     private func added(_ device: IOHIDDevice) {
         let vendor = IOHIDDeviceGetProperty(device, kIOHIDVendorIDKey as CFString) as? Int ?? 0
         let product = IOHIDDeviceGetProperty(device, kIOHIDProductIDKey as CFString) as? Int ?? 0
-        // A device without IDs cannot be matched to saved settings or a profile.
         guard vendor != 0 || product != 0 else { return }
         let id = DeviceID(vendorID: vendor, productID: product)
         let usage = IOHIDDeviceGetProperty(device, kIOHIDPrimaryUsageKey as CFString) as? Int

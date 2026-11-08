@@ -95,7 +95,6 @@ extension Action {
         }
     }
 
-    /// What Default does on a button: its click, or for a keystroke button what that keystroke does in macOS.
     static func defaultTitle(button number: Int, profile: DeviceProfile?) -> String {
         guard let keystroke = profile?.buttons.first(where: { $0.number == number })?.sends else {
             return mouseButton(number: number).title
@@ -126,7 +125,6 @@ extension Keystroke {
         if modifiers.contains(.option) { symbols += "⌥" }
         if modifiers.contains(.shift) { symbols += "⇧" }
         if modifiers.contains(.command) { symbols += "⌘" }
-        // Asking the current keyboard layout keeps labels right on non-US layouts.
         let character = CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true)
             .flatMap { NSEvent(cgEvent: $0)?.charactersIgnoringModifiers?.uppercased() }
         return symbols + (KeyCombo.keyNames[Int(keyCode)] ?? character ?? "Key \(keyCode)")

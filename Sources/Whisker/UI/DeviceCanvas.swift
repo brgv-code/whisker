@@ -10,13 +10,11 @@ struct ControlRow: Identifiable, Hashable {
     var control: Control
     var label: String
     var summary: String
-    /// What Default does on this control, shown in summaries and the action list.
     var defaultTitle = ""
     var position: DeviceProfile.Point?
     var id: Control { control }
 }
 
-/// The mouse drawn large, with a labelled callout per control, like a product diagram.
 struct DeviceCanvas: View {
     let rows: [ControlRow]
     @Binding var selected: Control?
@@ -78,7 +76,6 @@ struct DeviceCanvas: View {
         return Self.spread(placed.filter(\.isLeft)) + Self.spread(placed.filter { !$0.isLeft })
     }
 
-    /// Pushes callouts apart vertically so cards never overlap, then pulls the column back inside the canvas.
     private static func spread(_ column: [Callout]) -> [Callout] {
         var sorted = column.sorted { $0.anchor.y < $1.anchor.y }
         var nextFree = 40.0
@@ -140,7 +137,6 @@ struct DeviceCanvas: View {
     }
 }
 
-/// A thumb button or thumb wheel drawn on the side of the shell, under its hotspot.
 private struct SideDetail: View {
     let isWheel: Bool
 
@@ -163,7 +159,6 @@ private struct SideDetail: View {
     }
 }
 
-/// A generic ergonomic mouse seen from above, thumb rest on the left. Drawn in a 200 x 300 unit space.
 private struct MouseIllustration: View {
     var body: some View {
         ZStack {

@@ -5,7 +5,6 @@ import WhiskerCore
 struct MainView: View {
     @Environment(AppModel.self) private var model
     @State private var selected: Control?
-    /// Bundle identifier of the app being edited; nil edits the setup for all apps.
     @State private var scope: String?
     @State private var tab = Tab.buttons
 
@@ -137,7 +136,6 @@ private struct Header: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(model.sidebarDevices.count > 1 ? .visible : .hidden)
             .fixedSize()
-            // Outside the menu label: macOS flattens menu labels to one line.
             HStack(spacing: 5) {
                 Circle().fill(isConnected ? Color.green : Color.secondary).frame(width: 7, height: 7)
                 Text(isConnected ? "Connected" : "Not connected").font(.caption).foregroundStyle(.secondary)
@@ -150,7 +148,6 @@ private struct Header: View {
             )
             .toggleStyle(.switch)
         }
-        // Shares the title bar row; the leading inset clears the window buttons.
         .padding(.leading, 84)
         .padding(.trailing, 24)
         .padding(.top, 8)
@@ -158,7 +155,6 @@ private struct Header: View {
     }
 }
 
-/// "All Apps" plus one chip per app with its own settings, like app-specific profiles.
 private struct AppChips: View {
     let device: DeviceID
     @Binding var scope: String?

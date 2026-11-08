@@ -1,6 +1,5 @@
 import Foundation
 
-/// USB/Bluetooth identity, coded as "1ea7:0067" so config and device files stay readable.
 public struct DeviceID: Hashable, Codable, Sendable, CustomStringConvertible {
     public var vendorID: Int
     public var productID: Int
@@ -44,7 +43,6 @@ public struct GestureBindings: Hashable, Codable, Sendable {
         self.right = right
     }
 
-    // Mirrors the Logitech gesture button defaults so the feature is useful out of the box.
     public static let standard = GestureBindings(
         click: .system(action: .missionControl),
         up: .system(action: .missionControl),
@@ -82,7 +80,6 @@ public struct DeviceSettings: Hashable, Codable, Sendable {
     public var buttons: [Int: ButtonBinding]
     public var scroll: ScrollSettings
     public var thumbWheel: ThumbWheelBinding
-    /// Keyed by app bundle identifier; only the buttons listed here differ from `buttons`.
     public var appOverrides: [String: [Int: ButtonBinding]]
 
     public init(

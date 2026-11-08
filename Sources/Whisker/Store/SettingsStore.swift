@@ -56,7 +56,6 @@ final class SettingsStore {
         do {
             return try JSONDecoder().decode(Settings.self, from: contents)
         } catch {
-            // Keep the unreadable file for the user instead of silently overwriting it.
             let backup = url.deletingPathExtension().appendingPathExtension("broken.json")
             try? FileManager.default.removeItem(at: backup)
             try? FileManager.default.moveItem(at: url, to: backup)

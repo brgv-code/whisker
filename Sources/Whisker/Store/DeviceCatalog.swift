@@ -1,7 +1,6 @@
 import Foundation
 import WhiskerCore
 
-/// Device profiles shipped in the app bundle, built from the repo's `devices/` folder.
 struct DeviceCatalog {
     let profiles: [DeviceProfile]
 

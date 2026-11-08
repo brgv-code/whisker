@@ -2,7 +2,6 @@ import AppKit
 import Carbon.HIToolbox
 import WhiskerCore
 
-/// Turns actions into synthetic events. Every event it posts carries `syntheticMarker` so the tap ignores it.
 struct ActionPerformer: Sendable {
     static let syntheticMarker: Int64 = 0x5748_534B
 
@@ -36,7 +35,6 @@ struct ActionPerformer: Sendable {
         else { return }
         event.setIntegerValueField(.mouseEventButtonNumber, value: Int64(number))
         event.setIntegerValueField(.eventSourceUserData, value: Self.syntheticMarker)
-        // Mice that type shortcuts hold a modifier while we replay their button; it must not turn into a modified click.
         event.flags = []
         event.post(tap: .cghidEventTap)
     }
@@ -45,7 +43,6 @@ struct ActionPerformer: Sendable {
         if let keystroke = action.keystroke {
             postKey(keystroke)
         } else {
-            // Mission Control: opening the app works even when the user turned off the ⌃↑ shortcut.
             NSWorkspace.shared.open(URL(filePath: "/System/Applications/Mission Control.app"))
         }
     }
@@ -61,7 +58,6 @@ struct ActionPerformer: Sendable {
             return
         }
         event.flags = Self.flags(for: keystroke.keyCode, modifiers: keystroke.modifiers)
-        // The tap now watches keys too, so our own keystrokes must be recognisable.
         event.setIntegerValueField(.eventSourceUserData, value: Self.syntheticMarker)
         event.post(tap: .cghidEventTap)
     }
@@ -77,7 +73,6 @@ struct ActionPerformer: Sendable {
         if modifiers.contains(.option) { flags.insert(.maskAlternate) }
         if modifiers.contains(.control) { flags.insert(.maskControl) }
         if modifiers.contains(.shift) { flags.insert(.maskShift) }
-        // Space switching and Show Desktop ignore arrow and F-keys that lack the flags a real keyboard sends.
         if arrowKeys.contains(Int(keyCode)) { flags.formUnion([.maskSecondaryFn, .maskNumericPad]) }
         if functionKeys.contains(Int(keyCode)) { flags.insert(.maskSecondaryFn) }
         return flags

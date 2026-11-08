@@ -1,7 +1,6 @@
 import WhiskerCore
 import os
 
-/// The only state shared between the UI and the input thread, behind one lock.
 final class RuntimeState: Sendable {
     struct Snapshot: Sendable {
         var settings = Settings()
