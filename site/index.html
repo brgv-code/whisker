@@ -25,6 +25,15 @@
       --accent-text: #ffffff;
       --code-bg: #f2f2ef;
       --shadow: 0 30px 60px -20px rgba(20, 22, 30, 0.35);
+      --part-top: #34373e;
+      --part-hi: #5a5f69;
+      --part-side: #1f2125;
+      --part-edge: #61656f;
+      --rubber: #26282c;
+      --chip: #121316;
+      --board-top: #1d7a5f;
+      --board-side: #125240;
+      --board-edge: #3aa886;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -37,6 +46,15 @@
         --accent-text: #0b0c0e;
         --code-bg: #1c1d21;
         --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+        --part-top: #2f3137;
+        --part-hi: #4a4d56;
+        --part-side: #1b1c20;
+        --part-edge: #555963;
+        --rubber: #232428;
+        --chip: #0b0c0e;
+        --board-top: #186a52;
+        --board-side: #0e4636;
+        --board-edge: #2e9a7b;
       }
     }
     :root[data-theme="dark"] {
@@ -49,6 +67,15 @@
       --accent-text: #0b0c0e;
       --code-bg: #1c1d21;
       --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+      --part-top: #2f3137;
+      --part-hi: #4a4d56;
+      --part-side: #1b1c20;
+      --part-edge: #555963;
+      --rubber: #232428;
+      --chip: #0b0c0e;
+      --board-top: #186a52;
+      --board-side: #0e4636;
+      --board-edge: #2e9a7b;
     }
 
     * { box-sizing: border-box; }
@@ -106,6 +133,60 @@
     .shot img { width: 100%; height: auto; display: block; filter: drop-shadow(var(--shadow)); }
 
     section { padding: 88px 0 0; }
+
+    .xray { padding: 0; margin-top: 88px; height: 380vh; position: relative; }
+    .xray-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; }
+    .xray-head { padding-top: 28px; text-align: center; }
+    .xray-head .lead { margin: 0 auto; }
+    .xray-stage { position: relative; flex: 1; min-height: 0; }
+    .xray-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .xray-labels { position: absolute; inset: 0; pointer-events: none; }
+    .xray-label {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 224px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.45);
+      line-height: 1.3;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .xray-label.is-left { text-align: right; }
+    .xray-label.is-on { opacity: 1; }
+    .xray-label span { display: block; font-size: 12px; color: var(--muted); }
+    .xray-label strong { display: block; font-size: 14px; font-weight: 600; }
+    .xr-leader { opacity: 0; transition: opacity 0.35s ease; }
+    .xr-leader.is-on { opacity: 1; }
+    .xr-leader line { stroke: var(--muted); stroke-width: 1; }
+    .xr-leader circle { fill: #fff; stroke: var(--accent); stroke-width: 2.5; }
+    .xray-svg .side { fill: var(--part-side); }
+    .xray-svg .top { stroke: var(--part-edge); stroke-width: 1; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .xray-svg .edge { stroke: var(--part-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .xr-shell .top, .xr-key .top { fill: url(#xr-top-grad); }
+    .xr-rubber .top { fill: var(--rubber); }
+    .xr-chip .top { fill: var(--chip); }
+    .xr-board .side { fill: var(--board-side); }
+    .xr-board .top { fill: var(--board-top); stroke: var(--board-edge); }
+    .xr-board .edge { stroke: var(--board-edge); }
+    .xr-stop-hi { stop-color: var(--part-hi); }
+    .xr-stop-base { stop-color: var(--part-top); }
+    .xr-trace { fill: none; stroke: var(--board-edge); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+    .xr-ridges { fill: none; stroke: var(--part-hi); stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .xr-hole { fill: var(--chip); }
+    .xr-lens { fill: var(--accent); }
+    .xray-cue {
+      position: absolute;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
     h2 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 12px; }
     .lead { color: var(--muted); max-width: 640px; margin: 0 0 36px; }
 
@@ -155,6 +236,17 @@
       nav .links a.hide-small { display: none; }
       .hero { padding-top: 32px; }
     }
+    @media (max-width: 640px) {
+      .xray-label { width: 140px; padding: 5px 8px; }
+      .xray-label span { font-size: 11px; }
+      .xray-label strong { font-size: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .xray { height: auto; }
+      .xray-sticky { position: relative; }
+      .xray-cue { display: none; }
+      .xray-label, .xr-leader { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -187,6 +279,20 @@
     <div class="shot">
       <img src="screenshot.png" width="1800" height="1228" alt="Whisker showing an ISY IWN-5000-1 with labels pointing at each button and what it does">
     </div>
+
+    <section id="inside" class="xray">
+      <div class="xray-sticky">
+        <div class="xray-head">
+          <h2>Take it apart</h2>
+          <p class="lead">Every part you can press or turn gets its own setting.</p>
+        </div>
+        <div class="xray-stage">
+          <svg class="xray-svg" aria-hidden="true"></svg>
+          <div class="xray-labels"></div>
+          <div class="xray-cue">Scroll to take it apart ↓</div>
+        </div>
+      </div>
+    </section>
 
     <section id="features">
       <h2>Everything Logitech Options does, for the mouse you already have</h2>
@@ -244,6 +350,7 @@
         <div>
           <h2>Install</h2>
           <p class="lead">Download the app, unzip it and drag it to Applications. The first time you open it, macOS asks you to confirm in System Settings because Whisker is not notarized by Apple.</p>
+          <p>Or build it from source:</p>
           <ol class="steps">
             <li>Install the Xcode command line tools with <code>xcode-select --install</code>.</li>
             <li>Run these four commands in Terminal.</li>
@@ -267,5 +374,249 @@ open build/Whisker.app</code></pre>
       <a href="https://github.com/brgv-code/whisker">github.com/brgv-code/whisker</a>
     </footer>
   </div>
+  <script>
+    (() => {
+      const section = document.querySelector(".xray");
+      if (!section) return;
+      const stage = section.querySelector(".xray-stage");
+      const svg = section.querySelector(".xray-svg");
+      const labelHost = section.querySelector(".xray-labels");
+      const cue = section.querySelector(".xray-cue");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const COS = Math.cos(Math.PI / 6);
+
+      const OUTLINE = "M60 0C92 0 112 26 115 76C118 132 112 200 60 200C8 200 2 132 5 76C8 26 28 0 60 0Z";
+      const BOARD = "M60 14C86 14 101 36 103 78C105 128 100 186 60 186C20 186 15 128 17 78C19 36 34 14 60 14Z";
+      const HUMP = "M60 92C88 92 102 112 102 140C102 170 86 188 60 188C34 188 18 170 18 140C18 112 32 92 60 92Z";
+
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const lerp = (from, to, amount) => from + (to - from) * amount;
+      const ease = (amount) => (amount < 0.5 ? 4 * amount ** 3 : 1 - (-2 * amount + 2) ** 3 / 2);
+
+      const pill = (across, along, width, length, radius) =>
+        `M${across + radius} ${along}H${across + width - radius}` +
+        `A${radius} ${radius} 0 0 1 ${across + width} ${along + radius}V${along + length - radius}` +
+        `A${radius} ${radius} 0 0 1 ${across + width - radius} ${along + length}H${across + radius}` +
+        `A${radius} ${radius} 0 0 1 ${across} ${along + length - radius}V${along + radius}` +
+        `A${radius} ${radius} 0 0 1 ${across + radius} ${along}Z`;
+
+      const plane = (up, inner) => `<g transform="matrix(${COS} 0.5 ${-COS} 0.5 0 ${-up})">${inner}</g>`;
+
+      const slab = ({ shape, up, height, tone, clip }) => {
+        const clipAttr = clip ? ` clip-path="url(#${clip})"` : "";
+        let sides = "";
+        for (let level = up; level < up + height; level += 1) {
+          const edge = level === up ? " edge" : "";
+          sides += plane(level, `<path class="side${edge}" d="${shape}"${clipAttr}/>`);
+        }
+        return `<g class="xr-${tone}">${sides}${plane(up + height, `<path class="top" d="${shape}"${clipAttr}/>`)}</g>`;
+      };
+
+      const ridges = (name, up) => plane(up, `<path class="xr-ridges" data-ridges="${name}"/>`);
+
+      const parts = [
+        {
+          name: "base", explode: [0, 0], window: [0.52, 0.58],
+          layers: [
+            slab({ shape: OUTLINE, up: 0, height: 6, tone: "shell" }),
+            plane(6, `<circle class="xr-hole" cx="60" cy="118" r="11"/><circle class="xr-lens" cx="60" cy="118" r="4.5"/><circle class="xr-hole" cx="60" cy="24" r="2.6"/><circle class="xr-hole" cx="60" cy="176" r="2.6"/>`),
+          ],
+        },
+        {
+          name: "board", explode: [0, 66], window: [0.32, 0.58],
+          layers: [
+            slab({ shape: BOARD, up: 6, height: 2, tone: "board" }),
+            plane(8, `<path class="xr-trace" d="M30 42V84H60V108M90 42V84H60M60 48V84M60 140V166H38M101 82H90V164"/>`),
+            slab({ shape: pill(23, 30, 14, 12, 2), up: 8, height: 5, tone: "chip" }),
+            slab({ shape: pill(51, 26, 18, 22, 3), up: 8, height: 7, tone: "chip" }),
+            slab({ shape: pill(83, 30, 14, 12, 2), up: 8, height: 5, tone: "chip" }),
+            slab({ shape: pill(44, 108, 32, 32, 3), up: 8, height: 2, tone: "chip" }),
+            ...[72, 100, 128, 156].map((along) => slab({ shape: pill(95, along, 8, 10, 2), up: 8, height: 4, tone: "chip" })),
+          ],
+        },
+        {
+          name: "shell", explode: [0, 140], window: [0.18, 0.44],
+          layers: [
+            slab({ shape: OUTLINE, up: 6, height: 24, tone: "shell" }),
+            slab({ shape: HUMP, up: 30, height: 9, tone: "shell" }),
+          ],
+        },
+        {
+          name: "panels", explode: [0, 200], window: [0.1, 0.36],
+          layers: [
+            slab({ shape: OUTLINE, up: 30, height: 4, tone: "key", clip: "xr-clip-right" }),
+            slab({ shape: OUTLINE, up: 30, height: 4, tone: "key", clip: "xr-clip-left" }),
+          ],
+        },
+        {
+          name: "wheel", explode: [0, 246], window: [0.12, 0.4],
+          layers: [slab({ shape: pill(54, 22, 12, 38, 6), up: 26, height: 14, tone: "rubber" }), ridges("wheel", 40)],
+        },
+        {
+          name: "side", explode: [58, 96], window: [0.26, 0.52],
+          layers: [
+            slab({ shape: pill(113, 64, 10, 28, 5), up: 13, height: 13, tone: "rubber" }),
+            ridges("thumb", 26),
+            slab({ shape: pill(113, 96, 8, 24, 4), up: 15, height: 8, tone: "key" }),
+            slab({ shape: pill(113, 124, 8, 24, 4), up: 15, height: 8, tone: "key" }),
+            slab({ shape: pill(109, 154, 9, 18, 4.5), up: 11, height: 7, tone: "key" }),
+          ],
+        },
+      ];
+
+      const callouts = [
+        { part: "panels", at: [30, 44, 34], side: "left", caption: "Right click", value: "Mission Control" },
+        { part: "wheel", at: [60, 28, 40], side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
+        { part: "wheel", at: [60, 54, 40], side: "left", caption: "Wheel click", value: "Middle click" },
+        { part: "shell", at: [60, 140, 39], side: "left", caption: "Per-app settings", value: "Different in Arc" },
+        { part: "board", at: [60, 124, 10], side: "left", caption: "Mouse memory", value: "Never written to" },
+        { part: "side", at: [123, 78, 22], side: "right", caption: "Thumb wheel", value: "Scroll sideways" },
+        { part: "side", at: [121, 108, 21], side: "right", caption: "Forward", value: "Desktop on the right" },
+        { part: "side", at: [121, 136, 21], side: "right", caption: "Back", value: "Tap back, hold previous tab" },
+        { part: "side", at: [118, 163, 16], side: "right", caption: "Thumb button", value: "Gesture: hold and move" },
+        { part: "base", at: [60, 118, 6], side: "right", caption: "Connected · 1ea7:0067", value: "Settings stay with this mouse" },
+      ];
+
+      svg.innerHTML =
+        `<defs>` +
+        `<linearGradient id="xr-top-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="xr-stop-hi"/><stop offset="0.7" class="xr-stop-base"/></linearGradient>` +
+        `<clipPath id="xr-clip-right" clipPathUnits="userSpaceOnUse"><rect x="-5" y="-5" width="62" height="93"/></clipPath>` +
+        `<clipPath id="xr-clip-left" clipPathUnits="userSpaceOnUse"><rect x="63" y="-5" width="62" height="93"/></clipPath>` +
+        `</defs>` +
+        `<g class="xr-camera">${parts.map((part) => `<g data-part="${part.name}">${part.layers.join("")}</g>`).join("")}</g>` +
+        callouts.map(() => `<g class="xr-leader"><line/><circle r="4.5"/></g>`).join("");
+
+      const camera = svg.querySelector(".xr-camera");
+      parts.forEach((part) => { part.element = svg.querySelector(`[data-part="${part.name}"]`); });
+      const ridgePaths = Object.fromEntries([...svg.querySelectorAll("[data-ridges]")].map((path) => [path.dataset.ridges, path]));
+      const leaders = [...svg.querySelectorAll(".xr-leader")];
+
+      callouts.forEach((callout, index) => {
+        const label = document.createElement("div");
+        label.className = `xray-label is-${callout.side}`;
+        label.innerHTML = `<span>${callout.caption}</span><strong>${callout.value}</strong>`;
+        labelHost.append(label);
+        callout.label = label;
+        callout.leader = leaders[index];
+        callout.line = leaders[index].querySelector("line");
+        callout.dot = leaders[index].querySelector("circle");
+      });
+
+      const ridgeLines = (fromAcross, toAcross, fromAlong, toAlong, offset) => {
+        let lines = "";
+        for (let along = fromAlong + (offset % 4); along < toAlong; along += 4) lines += `M${fromAcross} ${along.toFixed(2)}H${toAcross}`;
+        return lines;
+      };
+
+      let metrics = null;
+
+      const measure = () => {
+        const width = stage.clientWidth;
+        const height = stage.clientHeight;
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        const labelWidth = callouts[0].label.offsetWidth;
+        callouts.forEach((callout) => { callout.height = callout.label.offsetHeight; });
+        const overlap = width < 640 ? 150 : 60;
+        const explodedScale = clamp(Math.min((height - 32) / 420, (width - 2 * labelWidth + overlap) / 290), 0.35, 1.8);
+        const assembledScale = Math.min(explodedScale * 1.5, (height - 32) / 180, (width - 32) / 290);
+        metrics = { width, height, labelWidth, explodedScale, assembledScale };
+      };
+
+      const scrollProgress = () => {
+        if (reducedMotion) return 1;
+        const travel = section.offsetHeight - window.innerHeight;
+        return travel > 0 ? clamp(-section.getBoundingClientRect().top / travel, 0, 1) : 1;
+      };
+
+      const layoutColumn = (entries) => {
+        entries.sort((first, second) => first.anchorY - second.anchorY);
+        let floor = 8;
+        entries.forEach((entry) => {
+          entry.top = Math.max(entry.anchorY - entry.callout.height / 2, floor);
+          floor = entry.top + entry.callout.height + 10;
+        });
+        let ceiling = metrics.height - 8;
+        [...entries].reverse().forEach((entry) => {
+          entry.top = Math.min(entry.top, ceiling - entry.callout.height);
+          ceiling = entry.top - 10;
+        });
+      };
+
+      const render = (time) => {
+        const { width, height, labelWidth, explodedScale, assembledScale } = metrics;
+        const progress = scrollProgress();
+        const explode = ease(clamp((progress - 0.04) / 0.3, 0, 1));
+        const scale = lerp(assembledScale, explodedScale, explode);
+        const originX = width / 2 + 22 * scale;
+        const originY = lerp(height / 2 - 66 * assembledScale, height / 2 + 50 * explodedScale, explode);
+        camera.setAttribute("transform", `translate(${originX.toFixed(2)} ${originY.toFixed(2)}) scale(${scale.toFixed(4)})`);
+
+        const offsets = {};
+        parts.forEach((part, index) => {
+          const [start, end] = part.window;
+          const local = ease(clamp((progress - start) / (end - start), 0, 1));
+          const bob = reducedMotion || !part.explode[1] ? 0 : Math.sin(time / 700 + index * 1.3) * 2.4 * local;
+          const across = part.explode[0] * local;
+          const up = part.explode[1] * local + bob;
+          offsets[part.name] = { across, up, local };
+          part.element.setAttribute("transform", `translate(${(COS * across).toFixed(2)} ${(0.5 * across - up).toFixed(2)})`);
+        });
+
+        const spin = reducedMotion ? 0 : time / 90;
+        ridgePaths.wheel.setAttribute("d", ridgeLines(54, 66, 23, 59, spin));
+        ridgePaths.thumb.setAttribute("d", ridgeLines(113, 123, 65, 91, 4 - (spin % 4)));
+
+        const placed = callouts.map((callout) => {
+          const offset = offsets[callout.part];
+          const [across, along, up] = callout.at;
+          const shifted = across + offset.across;
+          return {
+            callout,
+            anchorX: originX + scale * COS * (shifted - along),
+            anchorY: originY + scale * (0.5 * (shifted + along) - up - offset.up),
+            visible: offset.local > 0.92,
+          };
+        });
+        layoutColumn(placed.filter((entry) => entry.callout.side === "left"));
+        layoutColumn(placed.filter((entry) => entry.callout.side === "right"));
+
+        const mouseLeft = originX - 150 * scale;
+        const mouseRight = originX + 108 * scale;
+        placed.forEach(({ callout, anchorX, anchorY, visible, top }) => {
+          const isLeft = callout.side === "left";
+          const left = clamp(isLeft ? mouseLeft - 36 - labelWidth : mouseRight + 36, 0, width - labelWidth);
+          callout.label.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
+          callout.label.classList.toggle("is-on", visible);
+          callout.leader.classList.toggle("is-on", visible);
+          callout.line.setAttribute("x1", anchorX.toFixed(1));
+          callout.line.setAttribute("y1", anchorY.toFixed(1));
+          callout.line.setAttribute("x2", (isLeft ? left + labelWidth : left).toFixed(1));
+          callout.line.setAttribute("y2", (top + callout.height / 2).toFixed(1));
+          callout.dot.setAttribute("cx", anchorX.toFixed(1));
+          callout.dot.setAttribute("cy", anchorY.toFixed(1));
+        });
+
+        cue.style.opacity = String(1 - clamp(progress / 0.06, 0, 1));
+      };
+
+      let running = false;
+      const tick = (time) => {
+        if (!running) return;
+        render(time);
+        requestAnimationFrame(tick);
+      };
+
+      new ResizeObserver(() => {
+        measure();
+        render(performance.now());
+      }).observe(stage);
+
+      new IntersectionObserver(([entry]) => {
+        const wasRunning = running;
+        running = entry.isIntersecting && !reducedMotion;
+        if (running && !wasRunning) requestAnimationFrame(tick);
+      }).observe(section);
+    })();
+  </script>
 </body>
 </html>
