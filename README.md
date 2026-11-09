@@ -26,14 +26,11 @@ Everything runs on your Mac. Whisker never writes to the mouse's own memory.
 
 ## Install
 
-Requires macOS 15 or later and the Xcode command line tools (`xcode-select --install`).
+Requires macOS 15 or later, on Apple Silicon or Intel.
 
-```sh
-git clone https://github.com/brgv-code/whisker.git
-cd whisker
-./scripts/bundle.sh
-open build/Whisker.app
-```
+1. Download [Whisker.zip](https://github.com/brgv-code/whisker/releases/latest/download/Whisker.zip) and unzip it.
+2. Drag Whisker.app to Applications and open it.
+3. macOS says it cannot verify the developer, because Whisker is not notarized by Apple. Click Done, then go to **System Settings > Privacy & Security**, scroll down and click **Open Anyway**.
 
 Whisker lives in the menu bar. On first launch it asks for two permissions in **System Settings > Privacy & Security**:
 
@@ -43,6 +40,17 @@ Whisker lives in the menu bar. On first launch it asks for two permissions in **
 | Input Monitoring | To tell which mouse an event came from, so settings for one mouse never affect another. |
 
 Some mice type keyboard shortcuts for their side buttons (the ISY sends `⌃←` for back). To catch those, Whisker looks at every keystroke and acts only on the ones the profile says came from your mouse. It records which device typed, never what was typed, and nothing leaves your Mac.
+
+### Build from source
+
+Requires the Xcode command line tools (`xcode-select --install`).
+
+```sh
+git clone https://github.com/brgv-code/whisker.git
+cd whisker
+./scripts/bundle.sh
+open build/Whisker.app
+```
 
 `bundle.sh` signs with your Apple Development certificate when you have one. With ad-hoc signing macOS forgets both permissions after every rebuild, so you will need to remove and re-add Whisker in System Settings.
 
@@ -94,7 +102,7 @@ The remapping logic lives in `Sources/WhiskerCore` and has no macOS UI dependenc
 - macOS does not say which mouse sent an event, so Whisker follows the mouse that moved last. Switching mice and clicking within the same instant can apply the wrong mouse's settings to that one click.
 - Buttons the mouse handles internally (often the DPI button) never reach macOS and cannot be remapped.
 - Tap or hold is decided when you let go, so the hold action runs on release rather than while you are still holding.
-- There is no signed download yet. Build from source as shown above.
+- The download is not notarized by Apple, so the first launch needs Open Anyway (see Install).
 
 ## License
 
