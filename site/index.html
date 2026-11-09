@@ -26,16 +26,13 @@
       --code-bg: #f2f2ef;
       --shadow: 0 30px 60px -20px rgba(20, 22, 30, 0.35);
       --part-top: #34373e;
-      --part-hi: #5a5f69;
       --part-side: #1f2125;
-      --part-edge: #61656f;
       --rubber: #26282c;
       --chip: #121316;
       --board-top: #1d7a5f;
       --board-side: #125240;
       --board-edge: #3aa886;
       --metal: #c3c7ce;
-      --metal-side: #7f848d;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -49,16 +46,13 @@
         --code-bg: #1c1d21;
         --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
         --part-top: #2f3137;
-        --part-hi: #4a4d56;
         --part-side: #1b1c20;
-        --part-edge: #555963;
         --rubber: #232428;
         --chip: #0b0c0e;
         --board-top: #186a52;
         --board-side: #0e4636;
         --board-edge: #2e9a7b;
         --metal: #a3a8b0;
-        --metal-side: #5c6068;
       }
     }
     :root[data-theme="dark"] {
@@ -72,16 +66,13 @@
       --code-bg: #1c1d21;
       --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
       --part-top: #2f3137;
-      --part-hi: #4a4d56;
       --part-side: #1b1c20;
-      --part-edge: #555963;
       --rubber: #232428;
       --chip: #0b0c0e;
       --board-top: #186a52;
       --board-side: #0e4636;
       --board-edge: #2e9a7b;
       --metal: #a3a8b0;
-      --metal-side: #5c6068;
     }
 
     * { box-sizing: border-box; }
@@ -145,6 +136,7 @@
     .xray-head { padding-top: 28px; text-align: center; }
     .xray-head .lead { margin: 0 auto; }
     .xray-stage { position: relative; flex: 1; min-height: 0; }
+    .xray-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .xray-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
     .xray-labels { position: absolute; inset: 0; pointer-events: none; }
     .xray-label {
@@ -169,28 +161,6 @@
     .xr-leader.is-on { opacity: 1; }
     .xr-leader line { stroke: var(--muted); stroke-width: 1; }
     .xr-leader circle { fill: #fff; stroke: var(--accent); stroke-width: 2.5; }
-    .xray-svg .side { fill: var(--part-side); }
-    .xray-svg .top { stroke: var(--part-edge); stroke-width: 1; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-    .xray-svg .edge { stroke: var(--part-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
-    .xr-shell .top, .xr-key .top { fill: url(#xr-top-grad); }
-    .xr-rubber .top { fill: var(--rubber); }
-    .xr-chip .top { fill: var(--chip); }
-    .xr-board .side { fill: var(--board-side); }
-    .xr-board .top { fill: var(--board-top); stroke: var(--board-edge); }
-    .xr-board .edge { stroke: var(--board-edge); }
-    .xr-stop-hi { stop-color: var(--part-hi); }
-    .xr-stop-base { stop-color: var(--part-top); }
-    .xr-trace { fill: none; stroke: var(--board-edge); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-    .xr-ridges { fill: none; stroke: var(--part-hi); stroke-width: 1; vector-effect: non-scaling-stroke; }
-    .xr-hole { fill: var(--chip); }
-    .xr-lens { fill: var(--accent); }
-    .xr-metal .side { fill: var(--metal-side); }
-    .xr-metal .top { fill: var(--metal); }
-    .xr-metal .xr-ridges, .xr-teeth { stroke: var(--metal-side); }
-    .xr-seam { fill: none; stroke: rgba(0, 0, 0, 0.6); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-    .xr-dpi { font: 600 4.2px Inter, sans-serif; fill: var(--metal); text-anchor: middle; dominant-baseline: middle; }
-    .xr-led { stroke: rgba(0, 0, 0, 0.5); stroke-width: 0.6; }
-    .xr-teeth { fill: none; stroke: var(--part-hi); stroke-width: 1; vector-effect: non-scaling-stroke; }
     .xray-cue {
       position: absolute;
       left: 50%;
@@ -300,6 +270,7 @@
           <p class="lead">Every part you can press or turn gets its own setting.</p>
         </div>
         <div class="xray-stage">
+          <canvas class="xray-canvas" aria-hidden="true"></canvas>
           <svg class="xray-svg" aria-hidden="true"></svg>
           <div class="xray-labels"></div>
           <div class="xray-cue">Scroll to take it apart ↓</div>
@@ -387,200 +358,375 @@ open build/Whisker.app</code></pre>
       <a href="https://github.com/brgv-code/whisker">github.com/brgv-code/whisker</a>
     </footer>
   </div>
-  <script>
-    (() => {
-      const section = document.querySelector(".xray");
-      if (!section) return;
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    const section = document.querySelector(".xray");
+
+    const start = ({ THREE, RoomEnvironment, RoundedBoxGeometry }) => {
+      const { Vector3 } = THREE;
       const stage = section.querySelector(".xray-stage");
+      const canvas = section.querySelector(".xray-canvas");
       const svg = section.querySelector(".xray-svg");
       const labelHost = section.querySelector(".xray-labels");
       const cue = section.querySelector(".xray-cue");
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const COS = Math.cos(Math.PI / 6);
-
-      const FOOTPRINT = "M53 0C78 0 96 2 97 10C99 30 98 50 100 62C106 70 120 76 128 84C134 92 135 110 131 126C127 142 124 160 117 176C109 194 86 202 62 202C38 202 16 196 8 182C1 168 -1 150 3 128C7 104 7 70 7 40C7 20 8 4 22 1C32 0 42 0 53 0Z";
-      const DOME = "M53 0C78 0 96 2 97 10C99 30 99 50 101 66C103 90 103 130 106 156C108 178 90 200 62 202C38 202 16 196 8 182C1 168 -1 150 3 128C7 104 7 70 7 40C7 20 8 4 22 1C32 0 42 0 53 0Z";
-      const WING = "M99 62C106 70 120 76 128 84C134 92 135 110 131 126C127 142 124 160 117 176C110 188 100 188 98 176Z";
-      const BOARD = "M53 14C76 14 86 18 88 30C90 60 90 120 92 150C93 172 80 188 60 188C40 188 22 184 17 170C12 156 13 136 16 116C19 90 19 60 19 38C19 22 24 14 36 14Z";
-      const PEAK = [50, 125];
-      const DOME_FROM = 5;
-      const WALL_TOP = 20;
-      const DOME_TO = 80;
-      const PROFILE = [[5, 1], [20, 1], [30, 0.9], [42, 0.75], [56, 0.55], [68, 0.35], [76, 0.2], [80, 0.1]];
-      const PANEL_SEAM = 100;
-      const PANEL_SPLIT = 53;
-      const THUMB_STRIP = 95;
 
       const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
       const lerp = (from, to, amount) => from + (to - from) * amount;
       const ease = (amount) => (amount < 0.5 ? 4 * amount ** 3 : 1 - (-2 * amount + 2) ** 3 / 2);
-      const range = (from, to, step) => Array.from({ length: Math.floor((to - from) / step) + 1 }, (slot, index) => from + index * step);
-      const iso = (across, along, up) => [COS * (across - along), 0.5 * (across + along) - up];
-
-      const pill = (across, along, width, length, radius) =>
-        `M${across + radius} ${along}H${across + width - radius}` +
-        `A${radius} ${radius} 0 0 1 ${across + width} ${along + radius}V${along + length - radius}` +
-        `A${radius} ${radius} 0 0 1 ${across + width - radius} ${along + length}H${across + radius}` +
-        `A${radius} ${radius} 0 0 1 ${across} ${along + length - radius}V${along + radius}` +
-        `A${radius} ${radius} 0 0 1 ${across + radius} ${along}Z`;
-
-      const plane = (up, inner) => `<g transform="matrix(${COS} 0.5 ${-COS} 0.5 0 ${-up.toFixed(2)})">${inner}</g>`;
-
-      const slab = ({ shape, up, height, tone }) => {
-        let sides = "";
-        for (let level = up; level < up + height; level += 1) {
-          const edge = level === up ? " edge" : "";
-          sides += plane(level, `<path class="side${edge}" d="${shape}"/>`);
-        }
-        return `<g class="xr-${tone}">${sides}${plane(up + height, `<path class="top" d="${shape}"/>`)}</g>`;
+      const smoothstep = (from, to, value) => {
+        const amount = clamp((value - from) / (to - from), 0, 1);
+        return amount * amount * (3 - 2 * amount);
       };
 
-      const domeLevels = [];
-      for (let up = DOME_FROM; up <= DOME_TO; up += 1) {
-        const upper = PROFILE.findIndex(([height]) => height >= up);
-        const [lowUp, lowScale] = PROFILE[Math.max(upper - 1, 0)];
-        const [highUp, highScale] = PROFILE[upper];
-        domeLevels.push({ up, scale: highUp === lowUp ? highScale : lerp(lowScale, highScale, (up - lowUp) / (highUp - lowUp)) });
-      }
-      domeLevels.forEach((level) => { level.shade = Math.round(level.up <= WALL_TOP ? 14 + (12 * (level.up - DOME_FROM)) / (WALL_TOP - DOME_FROM) : 52 + (30 * (level.up - WALL_TOP)) / (DOME_TO - WALL_TOP)); });
-
-      const probe = document.createElement("canvas").getContext("2d");
-      const domePath = new Path2D(DOME);
-      const surfaceUp = (across, along) => {
-        for (let index = domeLevels.length - 1; index >= 0; index -= 1) {
-          const { up, scale } = domeLevels[index];
-          if (probe.isPointInPath(domePath, PEAK[0] + (across - PEAK[0]) / scale, PEAK[1] + (along - PEAK[1]) / scale)) return up;
-        }
-        return DOME_FROM;
-      };
-
-      const dome = (clip, fromUp = 0, toUp = Infinity) => {
-        const slices = domeLevels
-          .filter(({ up }) => up >= fromUp && up < toUp)
-          .map(({ up, scale, shade }, index) => {
-            const transform = `translate(${PEAK[0]} ${PEAK[1]}) scale(${scale.toFixed(4)}) translate(${-PEAK[0]} ${-PEAK[1]})`;
-            const edge = index === 0 ? " edge" : "";
-            return plane(up, `<g clip-path="url(#${clip})"><path class="slice${edge}" style="fill: color-mix(in srgb, var(--part-hi) ${shade}%, var(--part-side))" transform="${transform}" d="${DOME}"/></g>`);
-          });
-        return `<g>${slices.join("")}</g>`;
-      };
-
-      const seam = (points) => {
-        const onTop = points.filter(([across, along]) => surfaceUp(across, along) >= WALL_TOP);
-        const projected = onTop.map(([across, along]) => iso(across, along, surfaceUp(across, along)).map((value) => value.toFixed(2)).join(" "));
-        return `<path class="xr-seam" d="M${projected.join("L")}"/>`;
-      };
-
-      const leds = ["#ffffff", "#4a8cff", "#3ccf7a"].map((color, index) => {
-        const [screenX, screenY] = iso(100.5, 36 + index * 7, 17);
-        return `<circle class="xr-led" cx="${screenX.toFixed(2)}" cy="${screenY.toFixed(2)}" r="1.7" style="fill: ${color}"/>`;
-      }).join("");
-
-      const ridges = (name, up, tone = "") => plane(up, `<path class="xr-ridges ${tone}" data-ridges="${name}"/>`);
-
-      const wheelTop = surfaceUp(54, 38) + 8;
-      const dpiTop = surfaceUp(54, 74) + 2;
-      const SIDE_WHEEL = { across: 84, along: 90, radius: 20, chord: 96, from: 40, to: 58 };
-
-      const parts = [
-        {
-          name: "base", explode: [0, 0], window: [0.52, 0.58],
-          layers: [
-            slab({ shape: FOOTPRINT, up: 0, height: 5, tone: "shell" }),
-            plane(5, `<circle class="xr-hole" cx="55" cy="118" r="11"/><circle class="xr-lens" cx="55" cy="118" r="4.5"/><circle class="xr-hole" cx="55" cy="24" r="2.6"/><circle class="xr-hole" cx="55" cy="182" r="2.6"/>`),
-          ],
-        },
-        {
-          name: "board", explode: [0, 70], window: [0.32, 0.58],
-          layers: [
-            slab({ shape: BOARD, up: 5, height: 2, tone: "board" }),
-            plane(7, `<path class="xr-trace" d="M30 40V84H54V112M78 40V84H54M54 46V84M54 140V166H34M86 76H80V130"/>`),
-            slab({ shape: pill(24, 30, 12, 12, 2), up: 7, height: 5, tone: "chip" }),
-            slab({ shape: pill(47, 24, 14, 26, 3), up: 7, height: 7, tone: "chip" }),
-            slab({ shape: pill(72, 30, 12, 12, 2), up: 7, height: 5, tone: "chip" }),
-            slab({ shape: pill(50, 68, 8, 10, 2), up: 7, height: 4, tone: "chip" }),
-            slab({ shape: pill(40, 110, 30, 30, 3), up: 7, height: 2, tone: "chip" }),
-            ...[80, 108, 128].map((along) => slab({ shape: pill(80, along, 7, 10, 2), up: 7, height: 4, tone: "chip" })),
-          ],
-        },
-        {
-          name: "walls", explode: [0, 175], window: [0.18, 0.44],
-          layers: [dome("xr-clip-front", 0, WALL_TOP)],
-        },
-        {
-          name: "panels", explode: [0, 270], window: [0.1, 0.36],
-          layers: [
-            dome("xr-clip-right", WALL_TOP),
-            dome("xr-clip-left", WALL_TOP),
-            seam(range(2, PANEL_SEAM, 2).map((along) => [PANEL_SPLIT, along])),
-            seam(range(2, THUMB_STRIP, 2).map((across) => [across, PANEL_SEAM])),
-          ],
-        },
-        {
-          name: "wheel", explode: [0, 345], window: [0.12, 0.4],
-          layers: [
-            slab({ shape: pill(48, 22, 12, 34, 6), up: wheelTop - 16, height: 16, tone: "metal" }),
-            ridges("wheel", wheelTop, "xr-metal"),
-            slab({ shape: pill(48.5, 64, 11, 21, 5.5), up: dpiTop - 4, height: 4, tone: "key" }),
-            plane(dpiTop, `<text class="xr-dpi" x="54" y="74.5" transform="rotate(-90 54 74.5)">DPI</text>`),
-          ],
-        },
-        {
-          name: "shell", explode: [0, 175], window: [0.18, 0.44],
-          layers: [
-            slab({ shape: WING, up: 5, height: 17, tone: "shell" }),
-            dome("xr-clip-body"),
-            seam(range(2, THUMB_STRIP, 2).map((across) => [across, PANEL_SEAM + 2])),
-            leds,
-          ],
-        },
-        {
-          name: "side", explode: [62, 160], window: [0.26, 0.52],
-          layers: [
-            slab({ shape: pill(97, 76, 6, 20, 3), up: 28, height: 15, tone: "key" }),
-            slab({ shape: pill(97, 104, 6, 21, 3), up: 28, height: 15, tone: "key" }),
-            slab({ shape: `M${SIDE_WHEEL.chord} 74A${SIDE_WHEEL.radius} ${SIDE_WHEEL.radius} 0 0 1 ${SIDE_WHEEL.chord} 106Z`, up: SIDE_WHEEL.from, height: SIDE_WHEEL.to - SIDE_WHEEL.from, tone: "rubber" }),
-            `<path class="xr-teeth" data-teeth="side"/>`,
-            slab({ shape: pill(95, 110, 8, 12, 4), up: 47, height: 11, tone: "key" }),
-            slab({ shape: pill(127, 86, 7, 30, 3.5), up: 8, height: 12, tone: "key" }),
-          ],
-        },
+      const BASE = 3;
+      const GAP = 0.8;
+      const FILLET = 8;
+      const CENTER = [0, 8];
+      const SEAM_X = 4.5;
+      const WHEEL = { z: -39, radius: 10, width: 7, rise: 5.5 };
+      const RIDGE = [14, 23, 32, 40, 46, 50, 48, 38, 18];
+      const OUTLINE = [
+        [5, -64.7], [19.8, -64.4], [29.7, -61.4], [35, -51], [37, -29.7], [37.3, -6.6], [36, 16.5], [31.7, 36.3],
+        [23.1, 51], [9.9, 60.4], [-3.3, 62], [-18, 58.7], [-33, 49.5], [-44.6, 34.7], [-51, 18], [-52.8, 5],
+        [-50.8, -4], [-45.5, -8.3], [-36.3, -11.6], [-28, -16.5], [-25.4, -29.7], [-24, -46], [-21.8, -58.7],
+        [-16.5, -63.4], [-6.6, -64.7],
       ];
+
+      const ridgeHeight = (z) => {
+        const position = clamp((z + 64) / 16, 0, RIDGE.length - 1.0001);
+        const index = Math.floor(position);
+        const amount = position - index;
+        const [before, from, to, after] = [-1, 0, 1, 2].map((offset) => RIDGE[clamp(index + offset, 0, RIDGE.length - 1)]);
+        return 0.5 * (2 * from + (to - before) * amount + (2 * before - 5 * from + 4 * to - after) * amount ** 2 + (3 * from - before - 3 * to + after) * amount ** 3);
+      };
+
+      const domeHeight = (x, z) => {
+        const hump = ridgeHeight(z) * (1 - 0.3 * ((x + 4) / 42) ** 2);
+        const wing = 13 + 7 * smoothstep(-53, -28, x);
+        const wingMask = (1 - smoothstep(-31, -23, x)) * smoothstep(-22, -12, z) * (1 - smoothstep(28, 52, z));
+        return lerp(hump, wing, wingMask);
+      };
+
+      const surfaceNormal = (x, z) => {
+        const step = 0.5;
+        const slopeX = (domeHeight(x + step, z) - domeHeight(x - step, z)) / (2 * step);
+        const slopeZ = (domeHeight(x, z + step) - domeHeight(x, z - step)) / (2 * step);
+        return new Vector3(-slopeX, 1, -slopeZ).normalize();
+      };
+
+      const seamZ = (x) => -9 + 0.105 * (x + 23);
+
+      const rim = new THREE.CatmullRomCurve3(OUTLINE.map(([x, z]) => new Vector3(x, 0, z)), true, "centripetal").getSpacedPoints(240).slice(0, 240);
+
+      const buildDome = () => {
+        const rings = 60;
+        const count = rim.length;
+        const positions = [];
+        for (let ring = 0; ring <= rings; ring += 1) {
+          const inset = 0.985 * (ring / rings) ** 1.7;
+          rim.forEach((point) => {
+            const x = lerp(point.x, CENTER[0], inset);
+            const z = lerp(point.z, CENTER[1], inset);
+            const reach = Math.hypot(point.x - CENTER[0], point.z - CENTER[1]) * inset;
+            const round = Math.sqrt(1 - (1 - Math.min(reach / FILLET, 1)) ** 2);
+            positions.push(x, BASE + domeHeight(x, z) * round, z);
+          });
+        }
+        const peak = positions.length / 3;
+        positions.push(CENTER[0], BASE + domeHeight(...CENTER), CENTER[1]);
+        const indices = [];
+        for (let ring = 0; ring < rings; ring += 1) {
+          for (let index = 0; index < count; index += 1) {
+            const here = ring * count + index;
+            const next = ring * count + ((index + 1) % count);
+            indices.push(here, here + count, next, next, here + count, next + count);
+          }
+        }
+        for (let index = 0; index < count; index += 1) indices.push(rings * count + index, peak, rings * count + ((index + 1) % count));
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        const position = geometry.attributes.position.array;
+        const normal = geometry.attributes.normal.array;
+        const triangles = [];
+        for (let index = 0; index < indices.length; index += 3) {
+          triangles.push([0, 1, 2].map((corner) => {
+            const offset = indices[index + corner] * 3;
+            return [...position.slice(offset, offset + 3), ...normal.slice(offset, offset + 3)];
+          }));
+        }
+        return triangles;
+      };
+
+      const fan = (polygon, target) => {
+        for (let index = 1; index < polygon.length - 1; index += 1) target.push([polygon[0], polygon[index], polygon[index + 1]]);
+      };
+
+      const split = (triangles, field) => {
+        const below = [];
+        const above = [];
+        triangles.forEach((triangle) => {
+          const values = triangle.map(field);
+          if (values.every((value) => value <= 0)) return below.push(triangle);
+          if (values.every((value) => value >= 0)) return above.push(triangle);
+          const under = [];
+          const over = [];
+          triangle.forEach((corner, index) => {
+            const nextIndex = (index + 1) % 3;
+            const value = values[index];
+            const nextValue = values[nextIndex];
+            if (value <= 0) under.push(corner);
+            if (value >= 0) over.push(corner);
+            if (value * nextValue < 0) {
+              const amount = value / (value - nextValue);
+              const cut = corner.map((component, slot) => lerp(component, triangle[nextIndex][slot], amount));
+              under.push(cut);
+              over.push(cut);
+            }
+          });
+          fan(under, below);
+          fan(over, above);
+        });
+        return { below, above };
+      };
+
+      const keep = (triangles, field) => split(triangles, field).below;
+
+      const ridgeTexture = (count) => {
+        const texture = document.createElement("canvas");
+        texture.width = 512;
+        texture.height = 4;
+        const context = texture.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, texture.width, texture.height);
+        context.fillStyle = "#6b6b6b";
+        for (let ridge = 0; ridge < count; ridge += 1) context.fillRect((ridge * texture.width) / count, 0, texture.width / count / 2, texture.height);
+        const map = new THREE.CanvasTexture(texture);
+        map.colorSpace = THREE.SRGBColorSpace;
+        map.anisotropy = 4;
+        return map;
+      };
+
+      const materials = {
+        plastic: new THREE.MeshStandardMaterial({ roughness: 0.62, metalness: 0.05 }),
+        inside: new THREE.MeshStandardMaterial({ roughness: 0.95, side: THREE.BackSide }),
+        lining: new THREE.MeshStandardMaterial({ roughness: 0.95, side: THREE.DoubleSide }),
+        rubber: new THREE.MeshStandardMaterial({ roughness: 0.9 }),
+        metal: new THREE.MeshStandardMaterial({ metalness: 0.85, roughness: 0.32 }),
+        board: new THREE.MeshStandardMaterial({ roughness: 0.55 }),
+        chip: new THREE.MeshStandardMaterial({ roughness: 0.4 }),
+        trace: new THREE.LineBasicMaterial(),
+        lens: new THREE.MeshStandardMaterial({ roughness: 0.2 }),
+        knurl: new THREE.MeshStandardMaterial({ metalness: 0.85, roughness: 0.32, map: ridgeTexture(48), bumpMap: ridgeTexture(48), bumpScale: 2 }),
+        grip: new THREE.MeshStandardMaterial({ roughness: 0.9, map: ridgeTexture(64), bumpMap: ridgeTexture(64), bumpScale: 2 }),
+      };
+
+      const paint = () => {
+        const style = getComputedStyle(document.documentElement);
+        const tones = { plastic: "--part-top", inside: "--part-side", lining: "--part-side", rubber: "--rubber", grip: "--rubber", metal: "--metal", knurl: "--metal", board: "--board-top", chip: "--chip", trace: "--board-edge", lens: "--accent" };
+        Object.entries(tones).forEach(([name, token]) => materials[name].color.setStyle(style.getPropertyValue(token).trim()));
+      };
+      paint();
+
+      const labelTexture = (text) => {
+        const texture = document.createElement("canvas");
+        texture.width = 128;
+        texture.height = 64;
+        const context = texture.getContext("2d");
+        context.fillStyle = "#d9dce2";
+        context.font = "600 40px Inter, sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(text, 64, 34);
+        const map = new THREE.CanvasTexture(texture);
+        map.colorSpace = THREE.SRGBColorSpace;
+        return map;
+      };
+
+      const liner = (triangles) =>
+        surface(triangles.map((triangle) => triangle.map((corner) => [0, 1, 2].map((axis) => corner[axis] - corner[axis + 3] * 0.7).concat(corner.slice(3)))), materials.lining).outside;
+
+      const surface = (triangles, material = materials.plastic) => {
+        const positions = new Float32Array(triangles.length * 9);
+        const normals = new Float32Array(triangles.length * 9);
+        triangles.forEach((triangle, index) => {
+          triangle.forEach((corner, slot) => {
+            positions.set(corner.slice(0, 3), index * 9 + slot * 3);
+            normals.set(corner.slice(3, 6), index * 9 + slot * 3);
+          });
+        });
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+        const outside = new THREE.Mesh(geometry, material);
+        const group = new THREE.Group();
+        group.add(outside, new THREE.Mesh(geometry, materials.inside));
+        return { group, outside };
+      };
+
+      const outlineShape = (scale, [centerX, centerZ]) =>
+        new THREE.Shape(rim.map((point) => new THREE.Vector2(lerp(centerX, point.x, scale), -lerp(centerZ, point.z, scale))));
+
+      const slab = (shape, depth, material) => {
+        const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 2, curveSegments: 4 });
+        geometry.rotateX(-Math.PI / 2);
+        return new THREE.Mesh(geometry, material);
+      };
+
+      const box = ([width, height, depth], radius, material) =>
+        new THREE.Mesh(new RoundedBoxGeometry(width, height, depth, 3, radius), material);
+
+      const place = (mesh, position, normal, out = new Vector3(0, 1, 0)) => {
+        mesh.position.copy(position);
+        if (normal) mesh.quaternion.setFromUnitVectors(out, normal);
+        return mesh;
+      };
+
+      const dome = buildDome();
+      const wingField = ([x, , z]) => Math.max(x + 24, -18 - z);
+      const { below: front, above: palm } = split(dome, ([x, , z]) => z - seamZ(x));
+      const { below: wing, above: buttonArea } = split(front, wingField);
+      let keys = keep(buttonArea, ([x, , z]) => z - seamZ(x) + GAP);
+      keys = keep(keys, (corner) => GAP - wingField(corner));
+      keys = split(keys, ([x, , z]) => Math.max(Math.abs(x - SEAM_X) - 4.6, Math.abs(z - WHEEL.z) - 11)).above;
+      const leftKey = keep(keys, ([x]) => x - SEAM_X + GAP / 2);
+      const rightKey = keep(keys, ([x]) => SEAM_X + GAP / 2 - x);
+
+      const shell = surface([...palm, ...wing]);
+      const panels = surface([...leftKey, ...rightKey]);
+
+      const caster = new THREE.Raycaster();
+      const hit = (origin, direction, target) => {
+        caster.set(origin, direction);
+        const [first] = caster.intersectObjects([target].flat(), false);
+        return { point: first.point, normal: first.face.normal.clone() };
+      };
+      const onWall = (z, height) => hit(new Vector3(-90, BASE + height, z), new Vector3(1, 0, 0), [shell.outside, panels.outside]);
+
+      const parts = [];
+      const part = (name, explode, window, ...meshes) => {
+        const group = new THREE.Group();
+        group.add(...meshes);
+        parts.push({ name, explode: new Vector3(...explode), window, group });
+        return group;
+      };
+
+      const lens = new Vector3(2, BASE, 12);
+      part("base", [0, 0, 0], [0.52, 0.58],
+        place(slab(outlineShape(1, [0, 0]), 1.8, materials.plastic), new Vector3(0, 0.6, 0)),
+        place(new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.4, 32), materials.chip), lens.clone().setY(BASE + 0.2)),
+        place(new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.6, 32), materials.lens), lens.clone().setY(BASE + 0.3)),
+      );
+
+      const boardTop = BASE + 3.2;
+      const chip = (size, x, z) => place(box(size, 0.5, materials.chip), new Vector3(x, boardTop + size[1] / 2, z));
+      const memory = new Vector3(12, boardTop + 1.6, -14);
+      const traces = new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints([
+          [-9, -32, -9, -16], [-9, -16, 2, -16], [16, -32, 16, -16], [16, -16, 2, -16], [2, -16, 2, 6], [2, 18, 2, 26],
+          [2, -16, 12, -16], [SEAM_X, -34, SEAM_X, -16], [-15, -6, -9, -6], [-15, 9, -9, 9], [-9, -6, -9, 26],
+        ].flatMap(([fromX, fromZ, toX, toZ]) => [new Vector3(fromX, boardTop + 0.05, fromZ), new Vector3(toX, boardTop + 0.05, toZ)])),
+        materials.trace,
+      );
+      part("board", [0, 24, 0], [0.32, 0.58],
+        place(slab(outlineShape(0.6, [0, 2]), 1.4, materials.board), new Vector3(0, BASE + 1.2, 0)),
+        traces,
+        chip([6, 5, 6], -9, -36), chip([6, 5, 6], 16, -36), chip([5, 5, 8], SEAM_X, -39), chip([9, 3, 10], 2, 12),
+        chip([10, 1.6, 10], memory.x, memory.z), chip([4, 4, 6], -15, -6), chip([4, 4, 6], -15, 9),
+      );
+
+      const leds = ["#ffffff", "#4a8cff", "#3ccf7a"].map((tint, index) => {
+        const { point, normal } = onWall(-42 + index * 5, 5 + index * 1.2);
+        return place(new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 12), new THREE.MeshStandardMaterial({ color: tint, emissive: tint, emissiveIntensity: 0.9 })), point.addScaledVector(normal, -0.3));
+      });
+      part("shell", [0, 58, 0], [0.18, 0.44], shell.group);
+      const wellNormal = surfaceNormal(SEAM_X, WHEEL.z);
+      const well = place(box([9.6, 18, 25], 1, materials.chip), new Vector3(SEAM_X, BASE + domeHeight(SEAM_X, WHEEL.z), WHEEL.z).addScaledVector(wellNormal, -9.4), wellNormal);
+      part("panels", [0, 96, 0], [0.1, 0.36], panels.group, liner([...leftKey, ...rightKey]), well, ...leds);
+
+      const wheelTop = BASE + domeHeight(SEAM_X, WHEEL.z) + WHEEL.rise;
+      const wheelCenter = new Vector3(SEAM_X, wheelTop - WHEEL.radius, WHEEL.z);
+      const scrollWheel = new THREE.Mesh(new THREE.CylinderGeometry(WHEEL.radius, WHEEL.radius, WHEEL.width, 64), [
+        materials.knurl,
+        materials.metal,
+        materials.metal,
+      ]);
+      const wheelAxle = new THREE.Group();
+      wheelAxle.position.copy(wheelCenter);
+      wheelAxle.rotation.z = Math.PI / 2;
+      wheelAxle.add(scrollWheel);
+      const dpiAt = new Vector3(SEAM_X, BASE + domeHeight(SEAM_X, -17), -17);
+      const dpiNormal = surfaceNormal(SEAM_X, -17);
+      const dpi = place(box([5.6, 3, 10], 1.4, materials.plastic), dpiAt.clone().addScaledVector(dpiNormal, 0.4), dpiNormal);
+      const dpiLabel = new THREE.Mesh(new THREE.PlaneGeometry(4, 8), new THREE.MeshBasicMaterial({ map: labelTexture("DPI"), transparent: true }));
+      dpiLabel.rotation.set(-Math.PI / 2, 0, -Math.PI / 2);
+      dpiLabel.position.y = 1.52;
+      dpi.add(dpiLabel);
+      part("wheel", [0, 128, 0], [0.12, 0.4], wheelAxle, dpi);
+
+      const forward = onWall(-7, 22);
+      const back = onWall(9, 22);
+      const thumbWheelHit = onWall(-3, 31);
+      const switchHit = onWall(14, 31);
+      const tipHit = hit(new Vector3(-49, BASE + 9, -40), new Vector3(0, 0, 1), shell.outside);
+      const sideKey = ({ point, normal }) => place(box([3.5, 6.5, 14], 1.7, materials.plastic), point.clone().addScaledVector(normal, 0.6), normal, new Vector3(-1, 0, 0));
+      const thumbWheel = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, 5, 64), [
+        materials.grip,
+        materials.rubber,
+        materials.rubber,
+      ]);
+      const thumbAxis = new Vector3(0, 1, 0).addScaledVector(thumbWheelHit.normal, -thumbWheelHit.normal.y).normalize();
+      place(thumbWheel, thumbWheelHit.point.clone().addScaledVector(thumbWheelHit.normal, -(9 - 2.2)), thumbAxis);
+      const switchKey = place(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 2.4, 32), materials.plastic), switchHit.point.clone().addScaledVector(switchHit.normal, 0.5), switchHit.normal);
+      const tipKey = place(box([5, 9, 10], 2, materials.plastic), tipHit.point.clone().addScaledVector(tipHit.normal, 0.8), tipHit.normal, new Vector3(0, 0, -1));
+      part("side", [-22, 58, 0], [0.2, 0.46], sideKey(forward), sideKey(back), thumbWheel, switchKey, tipKey);
 
       const callouts = [
-        { part: "wheel", at: [54, 30, wheelTop], side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
-        { part: "wheel", at: [54, 46, wheelTop], side: "left", caption: "Wheel click", value: "Middle click" },
-        { part: "panels", at: [26, 50, surfaceUp(26, 50)], side: "left", caption: "Right click", value: "Mission Control" },
-        { part: "shell", at: [50, 140, surfaceUp(50, 140)], side: "left", caption: "Per-app settings", value: "Different in Arc" },
-        { part: "board", at: [55, 125, 9], side: "left", caption: "Mouse memory", value: "Never written to" },
-        { part: "side", at: [101, 90, SIDE_WHEEL.to], side: "right", caption: "Thumb wheel", value: "Scroll sideways" },
-        { part: "side", at: [103, 86, 36], side: "right", caption: "Forward", value: "Desktop on the right" },
-        { part: "side", at: [103, 114, 36], side: "right", caption: "Back", value: "Tap back, hold previous tab" },
-        { part: "side", at: [134, 101, 14], side: "right", caption: "Thumb button", value: "Full screen" },
-        { part: "base", at: [55, 118, 5], side: "right", caption: "Connected · 1ea7:0067", value: "Settings stay with this mouse" },
+        { part: "wheel", at: new Vector3(SEAM_X, wheelTop, WHEEL.z), side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
+        { part: "wheel", at: new Vector3(SEAM_X, wheelCenter.y, WHEEL.z - WHEEL.radius), side: "left", caption: "Wheel click", value: "Middle click" },
+        { part: "panels", at: new Vector3(20, BASE + domeHeight(20, -35), -35), side: "left", caption: "Right click", value: "Mission Control" },
+        { part: "shell", at: new Vector3(8, BASE + domeHeight(8, 24), 24), side: "left", caption: "Per-app settings", value: "Different in Arc" },
+        { part: "board", at: memory, side: "left", caption: "Mouse memory", value: "Never written to" },
+        { part: "side", at: thumbWheelHit.point.clone().addScaledVector(thumbWheelHit.normal, 2.2), side: "right", caption: "Thumb wheel", value: "Scroll sideways" },
+        { part: "side", at: forward.point.clone().addScaledVector(forward.normal, 2.4), side: "right", caption: "Forward", value: "Desktop on the right" },
+        { part: "side", at: back.point.clone().addScaledVector(back.normal, 2.4), side: "right", caption: "Back", value: "Tap back, hold previous tab" },
+        { part: "side", at: tipHit.point.clone().addScaledVector(tipHit.normal, 2), side: "right", caption: "Thumb button", value: "Full screen" },
+        { part: "base", at: lens, side: "left", caption: "Connected · 1ea7:0067", value: "Settings stay with this mouse" },
       ];
 
-      svg.innerHTML =
-        `<defs>` +
-        `<linearGradient id="xr-top-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="xr-stop-hi"/><stop offset="0.7" class="xr-stop-base"/></linearGradient>` +
-        `<clipPath id="xr-clip-right" clipPathUnits="userSpaceOnUse"><rect x="-10" y="-10" width="${PANEL_SPLIT + 9}" height="${PANEL_SEAM + 10}"/></clipPath>` +
-        `<clipPath id="xr-clip-left" clipPathUnits="userSpaceOnUse"><rect x="${PANEL_SPLIT + 1.5}" y="-10" width="${THUMB_STRIP - PANEL_SPLIT - 1.5}" height="${PANEL_SEAM + 10}"/></clipPath>` +
-        `<clipPath id="xr-clip-front" clipPathUnits="userSpaceOnUse"><rect x="-10" y="-10" width="160" height="${PANEL_SEAM + 12}"/></clipPath>` +
-        `<clipPath id="xr-clip-body" clipPathUnits="userSpaceOnUse"><rect x="-10" y="${PANEL_SEAM + 2}" width="160" height="140"/><rect x="${THUMB_STRIP}" y="-10" width="60" height="${PANEL_SEAM + 12}"/></clipPath>` +
-        `</defs>` +
-        `<g class="xr-camera">${parts.map((part) => `<g data-part="${part.name}">${part.layers.join("")}</g>`).join("")}</g>` +
-        callouts.map(() => `<g class="xr-leader"><line/><circle r="4.5"/></g>`).join("");
+      const partByName = Object.fromEntries(parts.map((entry) => [entry.name, entry]));
+      const scene = new THREE.Scene();
+      parts.forEach(({ group }) => scene.add(group));
 
-      const camera = svg.querySelector(".xr-camera");
-      const partByName = {};
-      parts.forEach((part) => {
-        part.element = svg.querySelector(`[data-part="${part.name}"]`);
-        partByName[part.name] = part;
-      });
-      const wheelRidges = svg.querySelector('[data-ridges="wheel"]');
-      const sideTeeth = svg.querySelector('[data-teeth="side"]');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      const environment = new THREE.PMREMGenerator(renderer);
+      scene.environment = environment.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environmentIntensity = 0.75;
+      const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+      keyLight.position.set(-60, 140, -40);
+      scene.add(keyLight);
+
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 2000);
+      const eye = new Vector3(-1, 0.95, -0.8).setLength(800);
+      camera.position.copy(eye);
+      camera.lookAt(0, 0, 0);
+      camera.updateMatrixWorld();
+      const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+      const up = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+      const view = camera.matrixWorldInverse.clone();
+
+      svg.innerHTML = callouts.map(() => `<g class="xr-leader"><line/><circle r="4.5"/></g>`).join("");
       const leaders = [...svg.querySelectorAll(".xr-leader")];
-
       callouts.forEach((callout, index) => {
         const label = document.createElement("div");
         label.className = `xray-label is-${callout.side}`;
@@ -592,42 +738,32 @@ open build/Whisker.app</code></pre>
         callout.dot = leaders[index].querySelector("circle");
       });
 
-      const ridgeLines = (fromAcross, toAcross, fromAlong, toAlong, offset) => {
-        let lines = "";
-        for (let along = fromAlong + (offset % 4); along < toAlong; along += 4) lines += `M${fromAcross} ${along.toFixed(2)}H${toAcross}`;
-        return lines;
-      };
-
-      const teethLines = ({ across, along, radius, chord, from, to }, offset) => {
-        let lines = "";
-        const reach = Math.sqrt(radius ** 2 - (chord - across) ** 2);
-        for (let tooth = along - reach + 1 + (offset % 3); tooth < along + reach - 1; tooth += 3) {
-          const rim = across + Math.sqrt(radius ** 2 - (tooth - along) ** 2);
-          const [lowX, lowY] = iso(rim, tooth, from);
-          const [highX, highY] = iso(rim, tooth, to);
-          lines += `M${lowX.toFixed(2)} ${lowY.toFixed(2)}L${highX.toFixed(2)} ${highY.toFixed(2)}`;
-        }
-        return lines;
-      };
-
       const pose = (progress, time) => {
-        const offsets = {};
-        parts.forEach((part) => {
-          const [start, end] = part.window;
-          const local = ease(clamp((progress - start) / (end - start), 0, 1));
-          const bob = reducedMotion || !part.explode[1] ? 0 : Math.sin(time / 700 + part.explode[1] / 40) * 2.4 * local;
-          const across = part.explode[0] * local;
-          const up = part.explode[1] * local + bob;
-          offsets[part.name] = { across, up, local };
-          part.element.setAttribute("transform", `translate(${(COS * across).toFixed(2)} ${(0.5 * across - up).toFixed(2)})`);
+        parts.forEach((entry) => {
+          const [from, to] = entry.window;
+          entry.local = ease(clamp((progress - from) / (to - from), 0, 1));
+          const bob = reducedMotion || !entry.explode.y ? 0 : Math.sin(time / 700 + entry.explode.y / 15) * 1.2 * entry.local;
+          entry.group.position.copy(entry.explode).multiplyScalar(entry.local).setY(entry.explode.y * entry.local + bob);
         });
-        const panels = partByName.panels.element;
-        const shell = partByName.shell.element;
-        const panelsOnTop = offsets.panels.local > 0.12;
-        const isPanelsOnTop = shell.compareDocumentPosition(panels) & Node.DOCUMENT_POSITION_FOLLOWING;
-        if (panelsOnTop && !isPanelsOnTop) camera.insertBefore(shell, panels);
-        if (!panelsOnTop && isPanelsOnTop) camera.insertBefore(shell, partByName.side.element);
-        return offsets;
+        partByName.board.group.visible = partByName.panels.local > 0;
+      };
+
+      const corner = new Vector3();
+      const footprint = () => {
+        const bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+        scene.updateMatrixWorld(true);
+        scene.traverse((object) => {
+          if (!object.isMesh) return;
+          const position = object.geometry.attributes.position;
+          for (let index = 0; index < position.count; index += 7) {
+            corner.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld).applyMatrix4(view);
+            bounds.minX = Math.min(bounds.minX, corner.x);
+            bounds.maxX = Math.max(bounds.maxX, corner.x);
+            bounds.minY = Math.min(bounds.minY, corner.y);
+            bounds.maxY = Math.max(bounds.maxY, corner.y);
+          }
+        });
+        return bounds;
       };
 
       let metrics = null;
@@ -635,16 +771,19 @@ open build/Whisker.app</code></pre>
       const measure = () => {
         const width = stage.clientWidth;
         const height = stage.clientHeight;
+        renderer.setSize(width, height, false);
         svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        Object.assign(camera, { left: -width / 2, right: width / 2, top: height / 2, bottom: -height / 2 });
         const labelWidth = callouts[0].label.offsetWidth;
         callouts.forEach((callout) => { callout.height = callout.label.offsetHeight; });
         pose(0, 0);
-        const assembled = camera.getBBox();
+        const assembled = footprint();
         pose(1, 0);
-        const exploded = camera.getBBox();
+        const exploded = footprint();
+        const spanOf = (bounds) => ({ width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY });
         const overlap = width < 640 ? 150 : 60;
-        const explodedScale = clamp(Math.min((height - 24) / exploded.height, (width - 2 * labelWidth + overlap) / exploded.width), 0.3, 1.8);
-        const assembledScale = Math.min(explodedScale * 1.45, (height - 48) / assembled.height, (width - 32) / assembled.width);
+        const explodedScale = Math.max(Math.min((height - 24) / spanOf(exploded).height, (width - 2 * labelWidth + overlap) / spanOf(exploded).width), 0.5);
+        const assembledScale = Math.min(explodedScale * 1.45, (height - 48) / spanOf(assembled).height, (width - 32) / spanOf(assembled).width);
         metrics = { width, height, labelWidth, explodedScale, assembledScale, assembled, exploded };
       };
 
@@ -668,40 +807,43 @@ open build/Whisker.app</code></pre>
         });
       };
 
+      const anchor = new Vector3();
+
       const render = (time) => {
         const { width, height, labelWidth, explodedScale, assembledScale, assembled, exploded } = metrics;
         const progress = scrollProgress();
         const explode = ease(clamp((progress - 0.04) / 0.3, 0, 1));
         const scale = lerp(assembledScale, explodedScale, explode);
-        const boxX = lerp(assembled.x, exploded.x, explode);
-        const boxY = lerp(assembled.y, exploded.y, explode);
-        const boxWidth = lerp(assembled.width, exploded.width, explode);
-        const boxHeight = lerp(assembled.height, exploded.height, explode);
-        const originX = width / 2 - scale * (boxX + boxWidth / 2);
-        const originY = height / 2 - scale * (boxY + boxHeight / 2);
-        camera.setAttribute("transform", `translate(${originX.toFixed(2)} ${originY.toFixed(2)}) scale(${scale.toFixed(4)})`);
+        const minX = lerp(assembled.minX, exploded.minX, explode);
+        const maxX = lerp(assembled.maxX, exploded.maxX, explode);
+        const centerX = (minX + maxX) / 2;
+        const centerY = lerp((assembled.minY + assembled.maxY) / 2, (exploded.minY + exploded.maxY) / 2, explode);
+        camera.zoom = scale;
+        camera.position.copy(eye).addScaledVector(right, centerX).addScaledVector(up, centerY);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld();
 
-        const offsets = pose(progress, time);
-        const spin = reducedMotion ? 0 : time / 90;
-        wheelRidges.setAttribute("d", ridgeLines(48, 60, 23, 55, spin));
-        sideTeeth.setAttribute("d", teethLines(SIDE_WHEEL, spin / 2));
+        pose(progress, time);
+        const spin = reducedMotion ? 0 : time / 600;
+        scrollWheel.rotation.y = -spin;
+        thumbWheel.rotation.y = spin / 2;
+        renderer.render(scene, camera);
 
         const placed = callouts.map((callout) => {
-          const offset = offsets[callout.part];
-          const [across, along, up] = callout.at;
-          const shifted = across + offset.across;
+          const entry = partByName[callout.part];
+          anchor.copy(callout.at).add(entry.group.position).project(camera);
           return {
             callout,
-            anchorX: originX + scale * COS * (shifted - along),
-            anchorY: originY + scale * (0.5 * (shifted + along) - up - offset.up),
-            visible: offset.local > 0.92,
+            anchorX: ((anchor.x + 1) / 2) * width,
+            anchorY: ((1 - anchor.y) / 2) * height,
+            visible: entry.local > 0.92,
           };
         });
         layoutColumn(placed.filter((entry) => entry.callout.side === "left"));
         layoutColumn(placed.filter((entry) => entry.callout.side === "right"));
 
-        const mouseLeft = originX + scale * boxX;
-        const mouseRight = originX + scale * (boxX + boxWidth);
+        const mouseLeft = width / 2 + (minX - centerX) * scale;
+        const mouseRight = width / 2 + (maxX - centerX) * scale;
         placed.forEach(({ callout, anchorX, anchorY, visible, top }) => {
           const isLeft = callout.side === "left";
           const left = clamp(isLeft ? mouseLeft - 36 - labelWidth : mouseRight + 36, 0, width - labelWidth);
@@ -726,6 +868,11 @@ open build/Whisker.app</code></pre>
         requestAnimationFrame(tick);
       };
 
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        paint();
+        render(performance.now());
+      });
+
       new ResizeObserver(() => {
         measure();
         render(performance.now());
@@ -736,7 +883,17 @@ open build/Whisker.app</code></pre>
         running = entry.isIntersecting && !reducedMotion;
         if (running && !wasRunning) requestAnimationFrame(tick);
       }).observe(section);
-    })();
+    };
+
+    try {
+      const THREE = await import("three");
+      const { RoomEnvironment } = await import("three/addons/environments/RoomEnvironment.js");
+      const { RoundedBoxGeometry } = await import("three/addons/geometries/RoundedBoxGeometry.js");
+      start({ THREE, RoomEnvironment, RoundedBoxGeometry });
+    } catch (error) {
+      console.error(error);
+      section.hidden = true;
+    }
   </script>
 </body>
 </html>
