@@ -34,6 +34,8 @@
       --board-top: #1d7a5f;
       --board-side: #125240;
       --board-edge: #3aa886;
+      --metal: #c3c7ce;
+      --metal-side: #7f848d;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -55,6 +57,8 @@
         --board-top: #186a52;
         --board-side: #0e4636;
         --board-edge: #2e9a7b;
+        --metal: #a3a8b0;
+        --metal-side: #5c6068;
       }
     }
     :root[data-theme="dark"] {
@@ -76,6 +80,8 @@
       --board-top: #186a52;
       --board-side: #0e4636;
       --board-edge: #2e9a7b;
+      --metal: #a3a8b0;
+      --metal-side: #5c6068;
     }
 
     * { box-sizing: border-box; }
@@ -178,6 +184,13 @@
     .xr-ridges { fill: none; stroke: var(--part-hi); stroke-width: 1; vector-effect: non-scaling-stroke; }
     .xr-hole { fill: var(--chip); }
     .xr-lens { fill: var(--accent); }
+    .xr-metal .side { fill: var(--metal-side); }
+    .xr-metal .top { fill: var(--metal); }
+    .xr-metal .xr-ridges, .xr-teeth { stroke: var(--metal-side); }
+    .xr-seam { fill: none; stroke: rgba(0, 0, 0, 0.6); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .xr-dpi { font: 600 4.2px Inter, sans-serif; fill: var(--metal); text-anchor: middle; dominant-baseline: middle; }
+    .xr-led { stroke: rgba(0, 0, 0, 0.5); stroke-width: 0.6; }
+    .xr-teeth { fill: none; stroke: var(--part-hi); stroke-width: 1; vector-effect: non-scaling-stroke; }
     .xray-cue {
       position: absolute;
       left: 50%;
@@ -385,13 +398,24 @@ open build/Whisker.app</code></pre>
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const COS = Math.cos(Math.PI / 6);
 
-      const OUTLINE = "M60 0C92 0 112 26 115 76C118 132 112 200 60 200C8 200 2 132 5 76C8 26 28 0 60 0Z";
-      const BOARD = "M60 14C86 14 101 36 103 78C105 128 100 186 60 186C20 186 15 128 17 78C19 36 34 14 60 14Z";
-      const HUMP = "M60 92C88 92 102 112 102 140C102 170 86 188 60 188C34 188 18 170 18 140C18 112 32 92 60 92Z";
+      const FOOTPRINT = "M53 0C78 0 96 2 97 10C99 30 98 50 100 62C106 70 120 76 128 84C134 92 135 110 131 126C127 142 124 160 117 176C109 194 86 202 62 202C38 202 16 196 8 182C1 168 -1 150 3 128C7 104 7 70 7 40C7 20 8 4 22 1C32 0 42 0 53 0Z";
+      const DOME = "M53 0C78 0 96 2 97 10C99 30 99 50 101 66C103 90 103 130 106 156C108 178 90 200 62 202C38 202 16 196 8 182C1 168 -1 150 3 128C7 104 7 70 7 40C7 20 8 4 22 1C32 0 42 0 53 0Z";
+      const WING = "M99 62C106 70 120 76 128 84C134 92 135 110 131 126C127 142 124 160 117 176C110 188 100 188 98 176Z";
+      const BOARD = "M53 14C76 14 86 18 88 30C90 60 90 120 92 150C93 172 80 188 60 188C40 188 22 184 17 170C12 156 13 136 16 116C19 90 19 60 19 38C19 22 24 14 36 14Z";
+      const PEAK = [50, 125];
+      const DOME_FROM = 5;
+      const WALL_TOP = 20;
+      const DOME_TO = 80;
+      const PROFILE = [[5, 1], [20, 1], [30, 0.9], [42, 0.75], [56, 0.55], [68, 0.35], [76, 0.2], [80, 0.1]];
+      const PANEL_SEAM = 100;
+      const PANEL_SPLIT = 53;
+      const THUMB_STRIP = 95;
 
       const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
       const lerp = (from, to, amount) => from + (to - from) * amount;
       const ease = (amount) => (amount < 0.5 ? 4 * amount ** 3 : 1 - (-2 * amount + 2) ** 3 / 2);
+      const range = (from, to, step) => Array.from({ length: Math.floor((to - from) / step) + 1 }, (slot, index) => from + index * step);
+      const iso = (across, along, up) => [COS * (across - along), 0.5 * (across + along) - up];
 
       const pill = (across, along, width, length, radius) =>
         `M${across + radius} ${along}H${across + width - radius}` +
@@ -400,95 +424,161 @@ open build/Whisker.app</code></pre>
         `A${radius} ${radius} 0 0 1 ${across} ${along + length - radius}V${along + radius}` +
         `A${radius} ${radius} 0 0 1 ${across + radius} ${along}Z`;
 
-      const plane = (up, inner) => `<g transform="matrix(${COS} 0.5 ${-COS} 0.5 0 ${-up})">${inner}</g>`;
+      const plane = (up, inner) => `<g transform="matrix(${COS} 0.5 ${-COS} 0.5 0 ${-up.toFixed(2)})">${inner}</g>`;
 
-      const slab = ({ shape, up, height, tone, clip }) => {
-        const clipAttr = clip ? ` clip-path="url(#${clip})"` : "";
+      const slab = ({ shape, up, height, tone }) => {
         let sides = "";
         for (let level = up; level < up + height; level += 1) {
           const edge = level === up ? " edge" : "";
-          sides += plane(level, `<path class="side${edge}" d="${shape}"${clipAttr}/>`);
+          sides += plane(level, `<path class="side${edge}" d="${shape}"/>`);
         }
-        return `<g class="xr-${tone}">${sides}${plane(up + height, `<path class="top" d="${shape}"${clipAttr}/>`)}</g>`;
+        return `<g class="xr-${tone}">${sides}${plane(up + height, `<path class="top" d="${shape}"/>`)}</g>`;
       };
 
-      const ridges = (name, up) => plane(up, `<path class="xr-ridges" data-ridges="${name}"/>`);
+      const domeLevels = [];
+      for (let up = DOME_FROM; up <= DOME_TO; up += 1) {
+        const upper = PROFILE.findIndex(([height]) => height >= up);
+        const [lowUp, lowScale] = PROFILE[Math.max(upper - 1, 0)];
+        const [highUp, highScale] = PROFILE[upper];
+        domeLevels.push({ up, scale: highUp === lowUp ? highScale : lerp(lowScale, highScale, (up - lowUp) / (highUp - lowUp)) });
+      }
+      domeLevels.forEach((level) => { level.shade = Math.round(level.up <= WALL_TOP ? 14 + (12 * (level.up - DOME_FROM)) / (WALL_TOP - DOME_FROM) : 52 + (30 * (level.up - WALL_TOP)) / (DOME_TO - WALL_TOP)); });
+
+      const probe = document.createElement("canvas").getContext("2d");
+      const domePath = new Path2D(DOME);
+      const surfaceUp = (across, along) => {
+        for (let index = domeLevels.length - 1; index >= 0; index -= 1) {
+          const { up, scale } = domeLevels[index];
+          if (probe.isPointInPath(domePath, PEAK[0] + (across - PEAK[0]) / scale, PEAK[1] + (along - PEAK[1]) / scale)) return up;
+        }
+        return DOME_FROM;
+      };
+
+      const dome = (clip, fromUp = 0, toUp = Infinity) => {
+        const slices = domeLevels
+          .filter(({ up }) => up >= fromUp && up < toUp)
+          .map(({ up, scale, shade }, index) => {
+            const transform = `translate(${PEAK[0]} ${PEAK[1]}) scale(${scale.toFixed(4)}) translate(${-PEAK[0]} ${-PEAK[1]})`;
+            const edge = index === 0 ? " edge" : "";
+            return plane(up, `<g clip-path="url(#${clip})"><path class="slice${edge}" style="fill: color-mix(in srgb, var(--part-hi) ${shade}%, var(--part-side))" transform="${transform}" d="${DOME}"/></g>`);
+          });
+        return `<g>${slices.join("")}</g>`;
+      };
+
+      const seam = (points) => {
+        const onTop = points.filter(([across, along]) => surfaceUp(across, along) >= WALL_TOP);
+        const projected = onTop.map(([across, along]) => iso(across, along, surfaceUp(across, along)).map((value) => value.toFixed(2)).join(" "));
+        return `<path class="xr-seam" d="M${projected.join("L")}"/>`;
+      };
+
+      const leds = ["#ffffff", "#4a8cff", "#3ccf7a"].map((color, index) => {
+        const [screenX, screenY] = iso(100.5, 36 + index * 7, 17);
+        return `<circle class="xr-led" cx="${screenX.toFixed(2)}" cy="${screenY.toFixed(2)}" r="1.7" style="fill: ${color}"/>`;
+      }).join("");
+
+      const ridges = (name, up, tone = "") => plane(up, `<path class="xr-ridges ${tone}" data-ridges="${name}"/>`);
+
+      const wheelTop = surfaceUp(54, 38) + 8;
+      const dpiTop = surfaceUp(54, 74) + 2;
+      const SIDE_WHEEL = { across: 84, along: 90, radius: 20, chord: 96, from: 40, to: 58 };
 
       const parts = [
         {
           name: "base", explode: [0, 0], window: [0.52, 0.58],
           layers: [
-            slab({ shape: OUTLINE, up: 0, height: 6, tone: "shell" }),
-            plane(6, `<circle class="xr-hole" cx="60" cy="118" r="11"/><circle class="xr-lens" cx="60" cy="118" r="4.5"/><circle class="xr-hole" cx="60" cy="24" r="2.6"/><circle class="xr-hole" cx="60" cy="176" r="2.6"/>`),
+            slab({ shape: FOOTPRINT, up: 0, height: 5, tone: "shell" }),
+            plane(5, `<circle class="xr-hole" cx="55" cy="118" r="11"/><circle class="xr-lens" cx="55" cy="118" r="4.5"/><circle class="xr-hole" cx="55" cy="24" r="2.6"/><circle class="xr-hole" cx="55" cy="182" r="2.6"/>`),
           ],
         },
         {
-          name: "board", explode: [0, 66], window: [0.32, 0.58],
+          name: "board", explode: [0, 70], window: [0.32, 0.58],
           layers: [
-            slab({ shape: BOARD, up: 6, height: 2, tone: "board" }),
-            plane(8, `<path class="xr-trace" d="M30 42V84H60V108M90 42V84H60M60 48V84M60 140V166H38M101 82H90V164"/>`),
-            slab({ shape: pill(23, 30, 14, 12, 2), up: 8, height: 5, tone: "chip" }),
-            slab({ shape: pill(51, 26, 18, 22, 3), up: 8, height: 7, tone: "chip" }),
-            slab({ shape: pill(83, 30, 14, 12, 2), up: 8, height: 5, tone: "chip" }),
-            slab({ shape: pill(44, 108, 32, 32, 3), up: 8, height: 2, tone: "chip" }),
-            ...[72, 100, 128, 156].map((along) => slab({ shape: pill(95, along, 8, 10, 2), up: 8, height: 4, tone: "chip" })),
+            slab({ shape: BOARD, up: 5, height: 2, tone: "board" }),
+            plane(7, `<path class="xr-trace" d="M30 40V84H54V112M78 40V84H54M54 46V84M54 140V166H34M86 76H80V130"/>`),
+            slab({ shape: pill(24, 30, 12, 12, 2), up: 7, height: 5, tone: "chip" }),
+            slab({ shape: pill(47, 24, 14, 26, 3), up: 7, height: 7, tone: "chip" }),
+            slab({ shape: pill(72, 30, 12, 12, 2), up: 7, height: 5, tone: "chip" }),
+            slab({ shape: pill(50, 68, 8, 10, 2), up: 7, height: 4, tone: "chip" }),
+            slab({ shape: pill(40, 110, 30, 30, 3), up: 7, height: 2, tone: "chip" }),
+            ...[80, 108, 128].map((along) => slab({ shape: pill(80, along, 7, 10, 2), up: 7, height: 4, tone: "chip" })),
           ],
         },
         {
-          name: "shell", explode: [0, 140], window: [0.18, 0.44],
+          name: "walls", explode: [0, 175], window: [0.18, 0.44],
+          layers: [dome("xr-clip-front", 0, WALL_TOP)],
+        },
+        {
+          name: "panels", explode: [0, 270], window: [0.1, 0.36],
           layers: [
-            slab({ shape: OUTLINE, up: 6, height: 24, tone: "shell" }),
-            slab({ shape: HUMP, up: 30, height: 9, tone: "shell" }),
+            dome("xr-clip-right", WALL_TOP),
+            dome("xr-clip-left", WALL_TOP),
+            seam(range(2, PANEL_SEAM, 2).map((along) => [PANEL_SPLIT, along])),
+            seam(range(2, THUMB_STRIP, 2).map((across) => [across, PANEL_SEAM])),
           ],
         },
         {
-          name: "panels", explode: [0, 200], window: [0.1, 0.36],
+          name: "wheel", explode: [0, 345], window: [0.12, 0.4],
           layers: [
-            slab({ shape: OUTLINE, up: 30, height: 4, tone: "key", clip: "xr-clip-right" }),
-            slab({ shape: OUTLINE, up: 30, height: 4, tone: "key", clip: "xr-clip-left" }),
+            slab({ shape: pill(48, 22, 12, 34, 6), up: wheelTop - 16, height: 16, tone: "metal" }),
+            ridges("wheel", wheelTop, "xr-metal"),
+            slab({ shape: pill(48.5, 64, 11, 21, 5.5), up: dpiTop - 4, height: 4, tone: "key" }),
+            plane(dpiTop, `<text class="xr-dpi" x="54" y="74.5" transform="rotate(-90 54 74.5)">DPI</text>`),
           ],
         },
         {
-          name: "wheel", explode: [0, 246], window: [0.12, 0.4],
-          layers: [slab({ shape: pill(54, 22, 12, 38, 6), up: 26, height: 14, tone: "rubber" }), ridges("wheel", 40)],
+          name: "shell", explode: [0, 175], window: [0.18, 0.44],
+          layers: [
+            slab({ shape: WING, up: 5, height: 17, tone: "shell" }),
+            dome("xr-clip-body"),
+            seam(range(2, THUMB_STRIP, 2).map((across) => [across, PANEL_SEAM + 2])),
+            leds,
+          ],
         },
         {
-          name: "side", explode: [58, 96], window: [0.26, 0.52],
+          name: "side", explode: [62, 160], window: [0.26, 0.52],
           layers: [
-            slab({ shape: pill(113, 64, 10, 28, 5), up: 13, height: 13, tone: "rubber" }),
-            ridges("thumb", 26),
-            slab({ shape: pill(113, 96, 8, 24, 4), up: 15, height: 8, tone: "key" }),
-            slab({ shape: pill(113, 124, 8, 24, 4), up: 15, height: 8, tone: "key" }),
-            slab({ shape: pill(109, 154, 9, 18, 4.5), up: 11, height: 7, tone: "key" }),
+            slab({ shape: pill(97, 76, 6, 20, 3), up: 28, height: 15, tone: "key" }),
+            slab({ shape: pill(97, 104, 6, 21, 3), up: 28, height: 15, tone: "key" }),
+            slab({ shape: `M${SIDE_WHEEL.chord} 74A${SIDE_WHEEL.radius} ${SIDE_WHEEL.radius} 0 0 1 ${SIDE_WHEEL.chord} 106Z`, up: SIDE_WHEEL.from, height: SIDE_WHEEL.to - SIDE_WHEEL.from, tone: "rubber" }),
+            `<path class="xr-teeth" data-teeth="side"/>`,
+            slab({ shape: pill(95, 110, 8, 12, 4), up: 47, height: 11, tone: "key" }),
+            slab({ shape: pill(127, 86, 7, 30, 3.5), up: 8, height: 12, tone: "key" }),
           ],
         },
       ];
 
       const callouts = [
-        { part: "panels", at: [30, 44, 34], side: "left", caption: "Right click", value: "Mission Control" },
-        { part: "wheel", at: [60, 28, 40], side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
-        { part: "wheel", at: [60, 54, 40], side: "left", caption: "Wheel click", value: "Middle click" },
-        { part: "shell", at: [60, 140, 39], side: "left", caption: "Per-app settings", value: "Different in Arc" },
-        { part: "board", at: [60, 124, 10], side: "left", caption: "Mouse memory", value: "Never written to" },
-        { part: "side", at: [123, 78, 22], side: "right", caption: "Thumb wheel", value: "Scroll sideways" },
-        { part: "side", at: [121, 108, 21], side: "right", caption: "Forward", value: "Desktop on the right" },
-        { part: "side", at: [121, 136, 21], side: "right", caption: "Back", value: "Tap back, hold previous tab" },
-        { part: "side", at: [118, 163, 16], side: "right", caption: "Thumb button", value: "Gesture: hold and move" },
-        { part: "base", at: [60, 118, 6], side: "right", caption: "Connected · 1ea7:0067", value: "Settings stay with this mouse" },
+        { part: "wheel", at: [54, 30, wheelTop], side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
+        { part: "wheel", at: [54, 46, wheelTop], side: "left", caption: "Wheel click", value: "Middle click" },
+        { part: "panels", at: [26, 50, surfaceUp(26, 50)], side: "left", caption: "Right click", value: "Mission Control" },
+        { part: "shell", at: [50, 140, surfaceUp(50, 140)], side: "left", caption: "Per-app settings", value: "Different in Arc" },
+        { part: "board", at: [55, 125, 9], side: "left", caption: "Mouse memory", value: "Never written to" },
+        { part: "side", at: [101, 90, SIDE_WHEEL.to], side: "right", caption: "Thumb wheel", value: "Scroll sideways" },
+        { part: "side", at: [103, 86, 36], side: "right", caption: "Forward", value: "Desktop on the right" },
+        { part: "side", at: [103, 114, 36], side: "right", caption: "Back", value: "Tap back, hold previous tab" },
+        { part: "side", at: [134, 101, 14], side: "right", caption: "Thumb button", value: "Full screen" },
+        { part: "base", at: [55, 118, 5], side: "right", caption: "Connected · 1ea7:0067", value: "Settings stay with this mouse" },
       ];
 
       svg.innerHTML =
         `<defs>` +
         `<linearGradient id="xr-top-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="xr-stop-hi"/><stop offset="0.7" class="xr-stop-base"/></linearGradient>` +
-        `<clipPath id="xr-clip-right" clipPathUnits="userSpaceOnUse"><rect x="-5" y="-5" width="62" height="93"/></clipPath>` +
-        `<clipPath id="xr-clip-left" clipPathUnits="userSpaceOnUse"><rect x="63" y="-5" width="62" height="93"/></clipPath>` +
+        `<clipPath id="xr-clip-right" clipPathUnits="userSpaceOnUse"><rect x="-10" y="-10" width="${PANEL_SPLIT + 9}" height="${PANEL_SEAM + 10}"/></clipPath>` +
+        `<clipPath id="xr-clip-left" clipPathUnits="userSpaceOnUse"><rect x="${PANEL_SPLIT + 1.5}" y="-10" width="${THUMB_STRIP - PANEL_SPLIT - 1.5}" height="${PANEL_SEAM + 10}"/></clipPath>` +
+        `<clipPath id="xr-clip-front" clipPathUnits="userSpaceOnUse"><rect x="-10" y="-10" width="160" height="${PANEL_SEAM + 12}"/></clipPath>` +
+        `<clipPath id="xr-clip-body" clipPathUnits="userSpaceOnUse"><rect x="-10" y="${PANEL_SEAM + 2}" width="160" height="140"/><rect x="${THUMB_STRIP}" y="-10" width="60" height="${PANEL_SEAM + 12}"/></clipPath>` +
         `</defs>` +
         `<g class="xr-camera">${parts.map((part) => `<g data-part="${part.name}">${part.layers.join("")}</g>`).join("")}</g>` +
         callouts.map(() => `<g class="xr-leader"><line/><circle r="4.5"/></g>`).join("");
 
       const camera = svg.querySelector(".xr-camera");
-      parts.forEach((part) => { part.element = svg.querySelector(`[data-part="${part.name}"]`); });
-      const ridgePaths = Object.fromEntries([...svg.querySelectorAll("[data-ridges]")].map((path) => [path.dataset.ridges, path]));
+      const partByName = {};
+      parts.forEach((part) => {
+        part.element = svg.querySelector(`[data-part="${part.name}"]`);
+        partByName[part.name] = part;
+      });
+      const wheelRidges = svg.querySelector('[data-ridges="wheel"]');
+      const sideTeeth = svg.querySelector('[data-teeth="side"]');
       const leaders = [...svg.querySelectorAll(".xr-leader")];
 
       callouts.forEach((callout, index) => {
@@ -508,6 +598,38 @@ open build/Whisker.app</code></pre>
         return lines;
       };
 
+      const teethLines = ({ across, along, radius, chord, from, to }, offset) => {
+        let lines = "";
+        const reach = Math.sqrt(radius ** 2 - (chord - across) ** 2);
+        for (let tooth = along - reach + 1 + (offset % 3); tooth < along + reach - 1; tooth += 3) {
+          const rim = across + Math.sqrt(radius ** 2 - (tooth - along) ** 2);
+          const [lowX, lowY] = iso(rim, tooth, from);
+          const [highX, highY] = iso(rim, tooth, to);
+          lines += `M${lowX.toFixed(2)} ${lowY.toFixed(2)}L${highX.toFixed(2)} ${highY.toFixed(2)}`;
+        }
+        return lines;
+      };
+
+      const pose = (progress, time) => {
+        const offsets = {};
+        parts.forEach((part) => {
+          const [start, end] = part.window;
+          const local = ease(clamp((progress - start) / (end - start), 0, 1));
+          const bob = reducedMotion || !part.explode[1] ? 0 : Math.sin(time / 700 + part.explode[1] / 40) * 2.4 * local;
+          const across = part.explode[0] * local;
+          const up = part.explode[1] * local + bob;
+          offsets[part.name] = { across, up, local };
+          part.element.setAttribute("transform", `translate(${(COS * across).toFixed(2)} ${(0.5 * across - up).toFixed(2)})`);
+        });
+        const panels = partByName.panels.element;
+        const shell = partByName.shell.element;
+        const panelsOnTop = offsets.panels.local > 0.12;
+        const isPanelsOnTop = shell.compareDocumentPosition(panels) & Node.DOCUMENT_POSITION_FOLLOWING;
+        if (panelsOnTop && !isPanelsOnTop) camera.insertBefore(shell, panels);
+        if (!panelsOnTop && isPanelsOnTop) camera.insertBefore(shell, partByName.side.element);
+        return offsets;
+      };
+
       let metrics = null;
 
       const measure = () => {
@@ -516,10 +638,14 @@ open build/Whisker.app</code></pre>
         svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
         const labelWidth = callouts[0].label.offsetWidth;
         callouts.forEach((callout) => { callout.height = callout.label.offsetHeight; });
+        pose(0, 0);
+        const assembled = camera.getBBox();
+        pose(1, 0);
+        const exploded = camera.getBBox();
         const overlap = width < 640 ? 150 : 60;
-        const explodedScale = clamp(Math.min((height - 32) / 420, (width - 2 * labelWidth + overlap) / 290), 0.35, 1.8);
-        const assembledScale = Math.min(explodedScale * 1.5, (height - 32) / 180, (width - 32) / 290);
-        metrics = { width, height, labelWidth, explodedScale, assembledScale };
+        const explodedScale = clamp(Math.min((height - 24) / exploded.height, (width - 2 * labelWidth + overlap) / exploded.width), 0.3, 1.8);
+        const assembledScale = Math.min(explodedScale * 1.45, (height - 48) / assembled.height, (width - 32) / assembled.width);
+        metrics = { width, height, labelWidth, explodedScale, assembledScale, assembled, exploded };
       };
 
       const scrollProgress = () => {
@@ -543,28 +669,22 @@ open build/Whisker.app</code></pre>
       };
 
       const render = (time) => {
-        const { width, height, labelWidth, explodedScale, assembledScale } = metrics;
+        const { width, height, labelWidth, explodedScale, assembledScale, assembled, exploded } = metrics;
         const progress = scrollProgress();
         const explode = ease(clamp((progress - 0.04) / 0.3, 0, 1));
         const scale = lerp(assembledScale, explodedScale, explode);
-        const originX = width / 2 + 22 * scale;
-        const originY = lerp(height / 2 - 66 * assembledScale, height / 2 + 50 * explodedScale, explode);
+        const boxX = lerp(assembled.x, exploded.x, explode);
+        const boxY = lerp(assembled.y, exploded.y, explode);
+        const boxWidth = lerp(assembled.width, exploded.width, explode);
+        const boxHeight = lerp(assembled.height, exploded.height, explode);
+        const originX = width / 2 - scale * (boxX + boxWidth / 2);
+        const originY = height / 2 - scale * (boxY + boxHeight / 2);
         camera.setAttribute("transform", `translate(${originX.toFixed(2)} ${originY.toFixed(2)}) scale(${scale.toFixed(4)})`);
 
-        const offsets = {};
-        parts.forEach((part, index) => {
-          const [start, end] = part.window;
-          const local = ease(clamp((progress - start) / (end - start), 0, 1));
-          const bob = reducedMotion || !part.explode[1] ? 0 : Math.sin(time / 700 + index * 1.3) * 2.4 * local;
-          const across = part.explode[0] * local;
-          const up = part.explode[1] * local + bob;
-          offsets[part.name] = { across, up, local };
-          part.element.setAttribute("transform", `translate(${(COS * across).toFixed(2)} ${(0.5 * across - up).toFixed(2)})`);
-        });
-
+        const offsets = pose(progress, time);
         const spin = reducedMotion ? 0 : time / 90;
-        ridgePaths.wheel.setAttribute("d", ridgeLines(54, 66, 23, 59, spin));
-        ridgePaths.thumb.setAttribute("d", ridgeLines(113, 123, 65, 91, 4 - (spin % 4)));
+        wheelRidges.setAttribute("d", ridgeLines(48, 60, 23, 55, spin));
+        sideTeeth.setAttribute("d", teethLines(SIDE_WHEEL, spin / 2));
 
         const placed = callouts.map((callout) => {
           const offset = offsets[callout.part];
@@ -580,8 +700,8 @@ open build/Whisker.app</code></pre>
         layoutColumn(placed.filter((entry) => entry.callout.side === "left"));
         layoutColumn(placed.filter((entry) => entry.callout.side === "right"));
 
-        const mouseLeft = originX - 150 * scale;
-        const mouseRight = originX + 108 * scale;
+        const mouseLeft = originX + scale * boxX;
+        const mouseRight = originX + scale * (boxX + boxWidth);
         placed.forEach(({ callout, anchorX, anchorY, visible, top }) => {
           const isLeft = callout.side === "left";
           const left = clamp(isLeft ? mouseLeft - 36 - labelWidth : mouseRight + 36, 0, width - labelWidth);
