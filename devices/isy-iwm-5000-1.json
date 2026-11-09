@@ -1,5 +1,5 @@
 {
-  "name": "ISY IWN-5000-1",
+  "name": "ISY IWM-5000-1",
   "devices": ["1ea7:0067"],
   "buttons": [
     { "number": 1, "label": "Right click", "position": { "x": 0.72, "y": 0.2 } },

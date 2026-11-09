@@ -6,7 +6,7 @@ body:
     id: model
     attributes:
       label: Mouse brand and model
-      placeholder: ISY IWN-5000-1
+      placeholder: ISY IWM-5000-1
     validations:
       required: true
   - type: input

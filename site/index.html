@@ -25,6 +25,18 @@
       --accent-text: #ffffff;
       --code-bg: #f2f2ef;
       --shadow: 0 30px 60px -20px rgba(20, 22, 30, 0.35);
+      --part-top: #34373e;
+      --part-side: #1f2125;
+      --rubber: #26282c;
+      --chip: #121316;
+      --board-top: #1d7a5f;
+      --board-side: #125240;
+      --board-edge: #3aa886;
+      --metal: #c3c7ce;
+      --grain: 0.05;
+      --accent-2: #8b5cf6;
+      --accent-3: #0fa5a0;
+      --floor: rgba(20, 22, 30, 0.22);
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -37,6 +49,18 @@
         --accent-text: #0b0c0e;
         --code-bg: #1c1d21;
         --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+        --part-top: #2f3137;
+        --part-side: #1b1c20;
+        --rubber: #232428;
+        --chip: #0b0c0e;
+        --board-top: #186a52;
+        --board-side: #0e4636;
+        --board-edge: #2e9a7b;
+        --metal: #a3a8b0;
+        --grain: 0.07;
+        --accent-2: #a78bfa;
+        --accent-3: #2dd4bf;
+        --floor: rgba(0, 0, 0, 0.55);
       }
     }
     :root[data-theme="dark"] {
@@ -49,6 +73,18 @@
       --accent-text: #0b0c0e;
       --code-bg: #1c1d21;
       --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+      --part-top: #2f3137;
+      --part-side: #1b1c20;
+      --rubber: #232428;
+      --chip: #0b0c0e;
+      --board-top: #186a52;
+      --board-side: #0e4636;
+      --board-edge: #2e9a7b;
+      --metal: #a3a8b0;
+      --grain: 0.07;
+      --accent-2: #a78bfa;
+      --accent-3: #2dd4bf;
+      --floor: rgba(0, 0, 0, 0.55);
     }
 
     * { box-sizing: border-box; }
@@ -62,7 +98,42 @@
       line-height: 1.6;
     }
     a { color: inherit; }
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+    .wrap { position: relative; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+    .backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 900px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .backdrop::before {
+      content: "";
+      position: absolute;
+      inset: -160px -10% 0;
+      background:
+        radial-gradient(38% 46% at 74% 34%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+        radial-gradient(30% 38% at 18% 12%, color-mix(in srgb, var(--accent-2) 13%, transparent), transparent 70%),
+        radial-gradient(28% 32% at 92% 72%, color-mix(in srgb, var(--accent-3) 11%, transparent), transparent 70%);
+      filter: blur(24px);
+    }
+    .backdrop::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.4px);
+      background-size: 24px 24px;
+      -webkit-mask-image: radial-gradient(62% 56% at 50% 32%, #000 25%, transparent 75%);
+      mask-image: radial-gradient(62% 56% at 50% 32%, #000 25%, transparent 75%);
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(100deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
 
     nav {
       display: flex;
@@ -76,16 +147,115 @@
     nav .links a { color: var(--muted); text-decoration: none; }
     nav .links a:hover { color: var(--text); }
 
-    .hero { text-align: center; padding: 64px 0 40px; }
-    .hero h1 {
-      font-size: clamp(36px, 6vw, 60px);
-      line-height: 1.08;
-      letter-spacing: -0.025em;
-      margin: 0 auto 20px;
-      max-width: 820px;
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: 24px;
+      align-items: center;
+      padding: 40px 0 24px;
     }
-    .hero p { color: var(--muted); font-size: 19px; max-width: 620px; margin: 0 auto 32px; }
-    .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hero:has(.hero-stage[hidden]) { grid-template-columns: minmax(0, 1fr); }
+    .hero h1 {
+      font-size: clamp(36px, 5.2vw, 58px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin: 0 0 20px;
+    }
+    .hero-copy > p { color: var(--muted); font-size: 19px; max-width: 520px; margin: 0 0 32px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stars {
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 13px;
+    }
+    .hero-stage { position: relative; aspect-ratio: 1 / 0.9; min-height: 320px; }
+    .hero-stage::before {
+      content: "";
+      position: absolute;
+      inset: 4% 6% 18%;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+    }
+    .hero-stage::after {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 8%;
+      top: 60%;
+      height: 24%;
+      background: radial-gradient(closest-side, var(--floor), transparent);
+    }
+    .hero-canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; }
+    .press-card {
+      position: absolute;
+      z-index: 2;
+      top: 4%;
+      left: 0;
+      width: 236px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.5);
+      line-height: 1.35;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    .press-card.is-on { opacity: 1; transform: none; }
+    .press-card strong { display: block; font-size: 15px; margin: 6px 0 2px; }
+    .press-card span { display: block; font-size: 13px; color: var(--muted); }
+    .press-keys { display: flex; gap: 4px; }
+    kbd {
+      display: inline-block;
+      min-width: 24px;
+      padding: 2px 7px;
+      font: 600 12px/1.4 "Inter", sans-serif;
+      text-align: center;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-bottom-width: 3px;
+      border-radius: 6px;
+    }
+    .press-hint {
+      position: absolute;
+      z-index: 2;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .press-hint span { display: block; font-size: 12.5px; opacity: 0.8; }
+    .code-block { position: relative; }
+    .code-block pre { padding-right: 76px; }
+    .copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      font: 600 12px "Inter", sans-serif;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    .copy:hover { color: var(--text); }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      opacity: var(--grain);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
     .button {
       display: inline-flex;
       align-items: center;
@@ -98,14 +268,72 @@
       border: 1px solid var(--line);
       background: var(--surface);
     }
-    .button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+    .button.primary {
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
+      color: var(--accent-text);
+      border-color: transparent;
+      box-shadow: 0 10px 26px -12px color-mix(in srgb, var(--accent) 80%, transparent);
+    }
     .button svg { width: 18px; height: 18px; }
     .meta { margin-top: 18px; color: var(--muted); font-size: 14px; }
 
     .shot { margin: 40px auto 0; max-width: 1000px; }
     .shot img { width: 100%; height: auto; display: block; filter: drop-shadow(var(--shadow)); }
 
-    section { padding: 88px 0 0; }
+    section { padding: 72px 0 0; }
+    section:not(.xray)::before {
+      content: "";
+      display: block;
+      height: 1px;
+      margin-bottom: 64px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 45%, transparent), color-mix(in srgb, var(--accent-2) 45%, transparent), transparent);
+    }
+
+    .xray { padding: 0; margin-top: 88px; height: 380vh; position: relative; }
+    .xray-sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; }
+    .xray-head { padding-top: 28px; text-align: center; }
+    .xray-head .lead { margin: 0 auto; }
+    .xray-stage { position: relative; flex: 1; min-height: 0; }
+    .xray-stage::before {
+      content: "";
+      position: absolute;
+      inset: 10% 20%;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent);
+    }
+    .xray-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .xray-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .xray-labels { position: absolute; inset: 0; pointer-events: none; }
+    .xray-label {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 224px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.45);
+      line-height: 1.3;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .xray-label.is-left { text-align: right; }
+    .xray-label.is-on { opacity: 1; }
+    .xray-label span { display: block; font-size: 12px; color: var(--muted); }
+    .xray-label strong { display: block; font-size: 14px; font-weight: 600; }
+    .xr-leader { opacity: 0; transition: opacity 0.35s ease; }
+    .xr-leader.is-on { opacity: 1; }
+    .xr-leader line { stroke: var(--muted); stroke-width: 1; }
+    .xr-leader circle { fill: #fff; stroke: var(--accent); stroke-width: 2.5; }
+    .xray-cue {
+      position: absolute;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
     h2 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 12px; }
     .lead { color: var(--muted); max-width: 640px; margin: 0 0 36px; }
 
@@ -116,6 +344,22 @@
       border-radius: 14px;
       padding: 22px;
     }
+    .card { transition: border-color 0.2s ease, transform 0.2s ease; }
+    .card:hover { border-color: color-mix(in srgb, var(--tint) 45%, var(--line)); transform: translateY(-2px); }
+    .card:nth-child(3n + 1) { --tint: var(--accent); }
+    .card:nth-child(3n + 2) { --tint: var(--accent-2); }
+    .card:nth-child(3n) { --tint: var(--accent-3); }
+    .icon {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+      color: var(--tint);
+      background: color-mix(in srgb, var(--tint) 14%, transparent);
+    }
+    .icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .card h3 { font-size: 17px; margin: 0 0 6px; }
     .card p { margin: 0; color: var(--muted); font-size: 15px; }
 
@@ -140,7 +384,8 @@
     footer {
       margin-top: 100px;
       padding: 28px 0 40px;
-      border-top: 1px solid var(--line);
+      border-top: 1px solid transparent;
+      border-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 40%, var(--line)), color-mix(in srgb, var(--accent-2) 40%, var(--line)), transparent) 1;
       color: var(--muted);
       font-size: 14px;
       display: flex;
@@ -149,15 +394,32 @@
       gap: 12px;
     }
 
+    @media (hover: none) {
+      .press-card, .press-hint { display: none; }
+    }
     @media (max-width: 820px) {
+      .hero { grid-template-columns: minmax(0, 1fr); }
+      .hero-stage { min-height: 280px; }
       .grid { grid-template-columns: 1fr; }
       .split { grid-template-columns: 1fr; }
       nav .links a.hide-small { display: none; }
-      .hero { padding-top: 32px; }
+      .hero { padding-top: 24px; }
+    }
+    @media (max-width: 640px) {
+      .xray-label { width: 140px; padding: 5px 8px; }
+      .xray-label span { font-size: 11px; }
+      .xray-label strong { font-size: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .xray { height: auto; }
+      .xray-sticky { position: relative; }
+      .xray-cue { display: none; }
+      .xray-label, .xr-leader { transition: none; }
     }
   </style>
 </head>
 <body>
+  <div class="backdrop" aria-hidden="true"></div>
   <div class="wrap">
     <nav>
       <a class="brand" href="/">
@@ -172,47 +434,76 @@
     </nav>
 
     <header class="hero">
-      <h1>Make every button on your mouse do what you want.</h1>
+      <div class="hero-copy">
+      <h1>Make every button on your mouse <em>do what you want.</em></h1>
       <p>Whisker is a free, open source macOS app that remaps the buttons, wheels and gestures of any mouse. Made for the mice that ship without software.</p>
       <div class="actions">
         <a class="button primary" href="https://github.com/brgv-code/whisker">
           <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           View on GitHub
+          <span class="stars" hidden>★ <span></span></span>
         </a>
         <a class="button" href="https://github.com/brgv-code/whisker/releases/latest/download/Whisker.zip">Download for macOS</a>
       </div>
       <div class="meta">macOS 15 or later · MIT licensed</div>
+      </div>
+      <div class="hero-stage">
+        <canvas class="hero-canvas" aria-hidden="true"></canvas>
+        <div class="press-card" aria-live="polite"></div>
+        <p class="press-hint">Point at the mouse, then click, scroll or press a side button.<span>Side button not lighting up? Some mice type a shortcut that macOS keeps to itself. Whisker can still catch it.</span></p>
+      </div>
     </header>
 
     <div class="shot">
-      <img src="screenshot.png" width="1800" height="1228" alt="Whisker showing an ISY IWN-5000-1 with labels pointing at each button and what it does">
+      <img src="screenshot.png" width="1800" height="1228" alt="Whisker showing an ISY IWM-5000-1 with labels pointing at each button and what it does">
     </div>
+
+    <section id="inside" class="xray">
+      <div class="xray-sticky">
+        <div class="xray-head">
+          <h2>Take it apart</h2>
+          <p class="lead">Every part you can press or turn gets its own setting.</p>
+        </div>
+        <div class="xray-stage">
+          <canvas class="xray-canvas" aria-hidden="true"></canvas>
+          <svg class="xray-svg" aria-hidden="true"></svg>
+          <div class="xray-labels"></div>
+          <div class="xray-cue">Scroll to take it apart ↓</div>
+        </div>
+      </div>
+    </section>
 
     <section id="features">
       <h2>Everything Logitech Options does, for the mouse you already have</h2>
       <p class="lead">Pick a button on the drawing, choose what it does, done. Settings apply right away and stay with that mouse.</p>
       <div class="grid">
         <div class="card">
+          <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></span>
           <h3>Remap any button</h3>
           <p>Keyboard shortcuts, Mission Control, switching desktops, back and forward, tabs, full screen, media keys, another mouse button, or nothing.</p>
         </div>
         <div class="card">
+          <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 13V9.5M10 3h4"/></svg></span>
           <h3>Tap and hold</h3>
           <p>One action on a quick press and another on a hold. Go back on a tap, switch to the previous tab on a hold.</p>
         </div>
         <div class="card">
+          <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16M9.5 6.5 12 4l2.5 2.5M9.5 17.5 12 20l2.5-2.5M6.5 9.5 4 12l2.5 2.5M17.5 9.5 20 12l-2.5 2.5"/></svg></span>
           <h3>Gesture button</h3>
           <p>Hold a button and move the mouse up, down, left or right. Each direction runs its own action.</p>
         </div>
         <div class="card">
+          <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="4"/><path d="M8 8h8M8 12h8M8 16h8"/></svg></span>
           <h3>Thumb wheel</h3>
           <p>Scroll sideways, or turn each notch into an action like volume or switching tabs.</p>
         </div>
         <div class="card">
+          <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></span>
           <h3>Per-app settings</h3>
           <p>Give a button a different job in your browser than everywhere else. Add an app with one click.</p>
         </div>
         <div class="card">
+          <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg></span>
           <h3>Scrolling for the mouse only</h3>
           <p>Reverse the wheel or change its speed without touching your trackpad's Natural Scrolling.</p>
         </div>
@@ -227,7 +518,7 @@
           <a class="button" href="https://github.com/brgv-code/whisker/blob/main/CONTRIBUTING.md">Add a profile for your mouse</a>
         </div>
         <pre><code>{
-  "name": "ISY IWN-5000-1",
+  "name": "ISY IWM-5000-1",
   "devices": ["1ea7:0067"],
   "buttons": [
     { "number": 3, "label": "Back",
@@ -244,16 +535,20 @@
         <div>
           <h2>Install</h2>
           <p class="lead">Download the app, unzip it and drag it to Applications. The first time you open it, macOS asks you to confirm in System Settings because Whisker is not notarized by Apple.</p>
+          <p>Or build it from source:</p>
           <ol class="steps">
             <li>Install the Xcode command line tools with <code>xcode-select --install</code>.</li>
             <li>Run these four commands in Terminal.</li>
             <li>Grant <strong>Accessibility</strong> and <strong>Input Monitoring</strong> when Whisker asks. It needs them to change what your buttons do and to tell your mice apart.</li>
           </ol>
         </div>
-        <pre><code>git clone https://github.com/brgv-code/whisker.git
+        <div class="code-block">
+          <button class="copy" type="button">Copy</button>
+          <pre><code>git clone https://github.com/brgv-code/whisker.git
 cd whisker
 ./scripts/bundle.sh
 open build/Whisker.app</code></pre>
+        </div>
       </div>
     </section>
 
@@ -267,5 +562,728 @@ open build/Whisker.app</code></pre>
       <a href="https://github.com/brgv-code/whisker">github.com/brgv-code/whisker</a>
     </footer>
   </div>
+  <script>
+    (() => {
+      const stars = document.querySelector(".stars");
+      fetch("https://api.github.com/repos/brgv-code/whisker")
+        .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`GitHub answered ${response.status}`))))
+        .then(({ stargazers_count: count }) => {
+          if (count < 1) return;
+          stars.querySelector("span").textContent = count.toLocaleString("en");
+          stars.hidden = false;
+        })
+        .catch((error) => console.warn("Star count unavailable:", error.message));
+
+      document.querySelectorAll(".code-block").forEach((block) => {
+        const button = block.querySelector(".copy");
+        const code = block.querySelector("code");
+        button.addEventListener("click", () => {
+          navigator.clipboard.writeText(code.textContent).then(
+            () => {
+              button.textContent = "Copied";
+              setTimeout(() => { button.textContent = "Copy"; }, 1600);
+            },
+            () => {
+              getSelection().selectAllChildren(code);
+              button.textContent = "Press ⌘C";
+            },
+          );
+        });
+      });
+    })();
+  </script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    const section = document.querySelector(".xray");
+
+    const start = ({ THREE, RoomEnvironment, RoundedBoxGeometry }) => {
+      const { Vector3 } = THREE;
+      const stage = section.querySelector(".xray-stage");
+      const canvas = section.querySelector(".xray-canvas");
+      const svg = section.querySelector(".xray-svg");
+      const labelHost = section.querySelector(".xray-labels");
+      const cue = section.querySelector(".xray-cue");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const lerp = (from, to, amount) => from + (to - from) * amount;
+      const ease = (amount) => (amount < 0.5 ? 4 * amount ** 3 : 1 - (-2 * amount + 2) ** 3 / 2);
+      const smoothstep = (from, to, value) => {
+        const amount = clamp((value - from) / (to - from), 0, 1);
+        return amount * amount * (3 - 2 * amount);
+      };
+
+      const BASE = 3;
+      const GAP = 0.8;
+      const FILLET = 8;
+      const CENTER = [0, 8];
+      const SEAM_X = 4.5;
+      const WHEEL = { z: -39, radius: 10, width: 7, rise: 5.5 };
+      const RIDGE = [14, 23, 32, 40, 46, 50, 48, 38, 18];
+      const OUTLINE = [
+        [5, -64.7], [19.8, -64.4], [29.7, -61.4], [35, -51], [37, -29.7], [37.3, -6.6], [36, 16.5], [31.7, 36.3],
+        [23.1, 51], [9.9, 60.4], [-3.3, 62], [-18, 58.7], [-33, 49.5], [-44.6, 34.7], [-51, 18], [-52.8, 5],
+        [-50.8, -4], [-45.5, -8.3], [-36.3, -11.6], [-28, -16.5], [-25.4, -29.7], [-24, -46], [-21.8, -58.7],
+        [-16.5, -63.4], [-6.6, -64.7],
+      ];
+
+      const ridgeHeight = (z) => {
+        const position = clamp((z + 64) / 16, 0, RIDGE.length - 1.0001);
+        const index = Math.floor(position);
+        const amount = position - index;
+        const [before, from, to, after] = [-1, 0, 1, 2].map((offset) => RIDGE[clamp(index + offset, 0, RIDGE.length - 1)]);
+        return 0.5 * (2 * from + (to - before) * amount + (2 * before - 5 * from + 4 * to - after) * amount ** 2 + (3 * from - before - 3 * to + after) * amount ** 3);
+      };
+
+      const domeHeight = (x, z) => {
+        const hump = ridgeHeight(z) * (1 - 0.3 * ((x + 4) / 42) ** 2);
+        const wing = 13 + 7 * smoothstep(-53, -28, x);
+        const wingMask = (1 - smoothstep(-31, -23, x)) * smoothstep(-22, -12, z) * (1 - smoothstep(28, 52, z));
+        return lerp(hump, wing, wingMask);
+      };
+
+      const surfaceNormal = (x, z) => {
+        const step = 0.5;
+        const slopeX = (domeHeight(x + step, z) - domeHeight(x - step, z)) / (2 * step);
+        const slopeZ = (domeHeight(x, z + step) - domeHeight(x, z - step)) / (2 * step);
+        return new Vector3(-slopeX, 1, -slopeZ).normalize();
+      };
+
+      const seamZ = (x) => -9 + 0.105 * (x + 23);
+
+      const rim = new THREE.CatmullRomCurve3(OUTLINE.map(([x, z]) => new Vector3(x, 0, z)), true, "centripetal").getSpacedPoints(240).slice(0, 240);
+
+      const buildDome = () => {
+        const rings = 60;
+        const count = rim.length;
+        const positions = [];
+        for (let ring = 0; ring <= rings; ring += 1) {
+          const inset = 0.985 * (ring / rings) ** 1.7;
+          rim.forEach((point) => {
+            const x = lerp(point.x, CENTER[0], inset);
+            const z = lerp(point.z, CENTER[1], inset);
+            const reach = Math.hypot(point.x - CENTER[0], point.z - CENTER[1]) * inset;
+            const round = Math.sqrt(1 - (1 - Math.min(reach / FILLET, 1)) ** 2);
+            positions.push(x, BASE + domeHeight(x, z) * round, z);
+          });
+        }
+        const peak = positions.length / 3;
+        positions.push(CENTER[0], BASE + domeHeight(...CENTER), CENTER[1]);
+        const indices = [];
+        for (let ring = 0; ring < rings; ring += 1) {
+          for (let index = 0; index < count; index += 1) {
+            const here = ring * count + index;
+            const next = ring * count + ((index + 1) % count);
+            indices.push(here, here + count, next, next, here + count, next + count);
+          }
+        }
+        for (let index = 0; index < count; index += 1) indices.push(rings * count + index, peak, rings * count + ((index + 1) % count));
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        const position = geometry.attributes.position.array;
+        const normal = geometry.attributes.normal.array;
+        const triangles = [];
+        for (let index = 0; index < indices.length; index += 3) {
+          triangles.push([0, 1, 2].map((corner) => {
+            const offset = indices[index + corner] * 3;
+            return [...position.slice(offset, offset + 3), ...normal.slice(offset, offset + 3)];
+          }));
+        }
+        return triangles;
+      };
+
+      const fan = (polygon, target) => {
+        for (let index = 1; index < polygon.length - 1; index += 1) target.push([polygon[0], polygon[index], polygon[index + 1]]);
+      };
+
+      const split = (triangles, field) => {
+        const below = [];
+        const above = [];
+        triangles.forEach((triangle) => {
+          const values = triangle.map(field);
+          if (values.every((value) => value <= 0)) return below.push(triangle);
+          if (values.every((value) => value >= 0)) return above.push(triangle);
+          const under = [];
+          const over = [];
+          triangle.forEach((corner, index) => {
+            const nextIndex = (index + 1) % 3;
+            const value = values[index];
+            const nextValue = values[nextIndex];
+            if (value <= 0) under.push(corner);
+            if (value >= 0) over.push(corner);
+            if (value * nextValue < 0) {
+              const amount = value / (value - nextValue);
+              const cut = corner.map((component, slot) => lerp(component, triangle[nextIndex][slot], amount));
+              under.push(cut);
+              over.push(cut);
+            }
+          });
+          fan(under, below);
+          fan(over, above);
+        });
+        return { below, above };
+      };
+
+      const keep = (triangles, field) => split(triangles, field).below;
+
+      const ridgeTexture = (count) => {
+        const texture = document.createElement("canvas");
+        texture.width = 512;
+        texture.height = 4;
+        const context = texture.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, texture.width, texture.height);
+        context.fillStyle = "#6b6b6b";
+        for (let ridge = 0; ridge < count; ridge += 1) context.fillRect((ridge * texture.width) / count, 0, texture.width / count / 2, texture.height);
+        const map = new THREE.CanvasTexture(texture);
+        map.colorSpace = THREE.SRGBColorSpace;
+        map.anisotropy = 4;
+        return map;
+      };
+
+      const materials = {
+        plastic: new THREE.MeshStandardMaterial({ roughness: 0.62, metalness: 0.05 }),
+        inside: new THREE.MeshStandardMaterial({ roughness: 0.95, side: THREE.BackSide }),
+        lining: new THREE.MeshStandardMaterial({ roughness: 0.95, side: THREE.DoubleSide }),
+        rubber: new THREE.MeshStandardMaterial({ roughness: 0.9 }),
+        metal: new THREE.MeshStandardMaterial({ metalness: 0.85, roughness: 0.32 }),
+        board: new THREE.MeshStandardMaterial({ roughness: 0.55 }),
+        chip: new THREE.MeshStandardMaterial({ roughness: 0.4 }),
+        trace: new THREE.LineBasicMaterial(),
+        lens: new THREE.MeshStandardMaterial({ roughness: 0.2 }),
+        knurl: new THREE.MeshStandardMaterial({ metalness: 0.85, roughness: 0.32, map: ridgeTexture(48), bumpMap: ridgeTexture(48), bumpScale: 2 }),
+        grip: new THREE.MeshStandardMaterial({ roughness: 0.9, map: ridgeTexture(64), bumpMap: ridgeTexture(64), bumpScale: 2 }),
+      };
+
+      const tinted = [];
+
+      const paint = () => {
+        const style = getComputedStyle(document.documentElement);
+        const tones = { plastic: "--part-top", inside: "--part-side", lining: "--part-side", rubber: "--rubber", grip: "--rubber", metal: "--metal", knurl: "--metal", board: "--board-top", chip: "--chip", trace: "--board-edge", lens: "--accent" };
+        Object.entries(tones).forEach(([name, token]) => materials[name].color.setStyle(style.getPropertyValue(token).trim()));
+        tinted.forEach(([copy, original]) => copy.color.copy(original.color));
+      };
+      paint();
+
+      const labelTexture = (text) => {
+        const texture = document.createElement("canvas");
+        texture.width = 128;
+        texture.height = 64;
+        const context = texture.getContext("2d");
+        context.fillStyle = "#d9dce2";
+        context.font = "600 40px Inter, sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(text, 64, 34);
+        const map = new THREE.CanvasTexture(texture);
+        map.colorSpace = THREE.SRGBColorSpace;
+        return map;
+      };
+
+      const liner = (triangles) =>
+        surface(triangles.map((triangle) => triangle.map((corner) => [0, 1, 2].map((axis) => corner[axis] - corner[axis + 3] * 0.7).concat(corner.slice(3)))), materials.lining).outside;
+
+      const surface = (triangles, material = materials.plastic) => {
+        const positions = new Float32Array(triangles.length * 9);
+        const normals = new Float32Array(triangles.length * 9);
+        triangles.forEach((triangle, index) => {
+          triangle.forEach((corner, slot) => {
+            positions.set(corner.slice(0, 3), index * 9 + slot * 3);
+            normals.set(corner.slice(3, 6), index * 9 + slot * 3);
+          });
+        });
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+        const outside = new THREE.Mesh(geometry, material);
+        const group = new THREE.Group();
+        group.add(outside, new THREE.Mesh(geometry, materials.inside));
+        return { group, outside };
+      };
+
+      const outlineShape = (scale, [centerX, centerZ]) =>
+        new THREE.Shape(rim.map((point) => new THREE.Vector2(lerp(centerX, point.x, scale), -lerp(centerZ, point.z, scale))));
+
+      const slab = (shape, depth, material) => {
+        const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 2, curveSegments: 4 });
+        geometry.rotateX(-Math.PI / 2);
+        return new THREE.Mesh(geometry, material);
+      };
+
+      const box = ([width, height, depth], radius, material) =>
+        new THREE.Mesh(new RoundedBoxGeometry(width, height, depth, 3, radius), material);
+
+      const place = (mesh, position, normal, out = new Vector3(0, 1, 0)) => {
+        mesh.position.copy(position);
+        if (normal) mesh.quaternion.setFromUnitVectors(out, normal);
+        return mesh;
+      };
+
+      const dome = buildDome();
+      const wingField = ([x, , z]) => Math.max(x + 24, -18 - z);
+      const { below: front, above: palm } = split(dome, ([x, , z]) => z - seamZ(x));
+      const { below: wing, above: buttonArea } = split(front, wingField);
+      let keys = keep(buttonArea, ([x, , z]) => z - seamZ(x) + GAP);
+      keys = keep(keys, (corner) => GAP - wingField(corner));
+      keys = split(keys, ([x, , z]) => Math.max(Math.abs(x - SEAM_X) - 4.6, Math.abs(z - WHEEL.z) - 11)).above;
+      const leftKey = keep(keys, ([x]) => x - SEAM_X + GAP / 2);
+      const rightKey = keep(keys, ([x]) => SEAM_X + GAP / 2 - x);
+
+      const shell = surface([...palm, ...wing]);
+      const leftPanel = surface(leftKey);
+      const rightPanel = surface(rightKey);
+      leftPanel.outside.name = "left-key";
+      rightPanel.outside.name = "right-key";
+
+      const caster = new THREE.Raycaster();
+      const hit = (origin, direction, target) => {
+        caster.set(origin, direction);
+        const [first] = caster.intersectObjects([target].flat(), false);
+        return { point: first.point, normal: first.face.normal.clone() };
+      };
+      const onWall = (z, height) => hit(new Vector3(-90, BASE + height, z), new Vector3(1, 0, 0), [shell.outside, leftPanel.outside, rightPanel.outside]);
+
+      const parts = [];
+      const part = (name, explode, window, ...meshes) => {
+        const group = new THREE.Group();
+        group.add(...meshes);
+        parts.push({ name, explode: new Vector3(...explode), window, group });
+        return group;
+      };
+
+      const lens = new Vector3(2, BASE, 12);
+      part("base", [0, 0, 0], [0.52, 0.58],
+        place(slab(outlineShape(1, [0, 0]), 1.8, materials.plastic), new Vector3(0, 0.6, 0)),
+        place(new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.4, 32), materials.chip), lens.clone().setY(BASE + 0.2)),
+        place(new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.6, 32), materials.lens), lens.clone().setY(BASE + 0.3)),
+      );
+
+      const boardTop = BASE + 3.2;
+      const chip = (size, x, z) => place(box(size, 0.5, materials.chip), new Vector3(x, boardTop + size[1] / 2, z));
+      const memory = new Vector3(12, boardTop + 1.6, -14);
+      const traces = new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints([
+          [-9, -32, -9, -16], [-9, -16, 2, -16], [16, -32, 16, -16], [16, -16, 2, -16], [2, -16, 2, 6], [2, 18, 2, 26],
+          [2, -16, 12, -16], [SEAM_X, -34, SEAM_X, -16], [-15, -6, -9, -6], [-15, 9, -9, 9], [-9, -6, -9, 26],
+        ].flatMap(([fromX, fromZ, toX, toZ]) => [new Vector3(fromX, boardTop + 0.05, fromZ), new Vector3(toX, boardTop + 0.05, toZ)])),
+        materials.trace,
+      );
+      part("board", [0, 24, 0], [0.32, 0.58],
+        place(slab(outlineShape(0.6, [0, 2]), 1.4, materials.board), new Vector3(0, BASE + 1.2, 0)),
+        traces,
+        chip([6, 5, 6], -9, -36), chip([6, 5, 6], 16, -36), chip([5, 5, 8], SEAM_X, -39), chip([9, 3, 10], 2, 12),
+        chip([10, 1.6, 10], memory.x, memory.z), chip([4, 4, 6], -15, -6), chip([4, 4, 6], -15, 9),
+      );
+
+      const leds = ["#ffffff", "#4a8cff", "#3ccf7a"].map((tint, index) => {
+        const { point, normal } = onWall(-42 + index * 5, 5 + index * 1.2);
+        return place(new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 12), new THREE.MeshStandardMaterial({ color: tint, emissive: tint, emissiveIntensity: 0.9 })), point.addScaledVector(normal, -0.3));
+      });
+      part("shell", [0, 58, 0], [0.18, 0.44], shell.group);
+      const wellNormal = surfaceNormal(SEAM_X, WHEEL.z);
+      const well = place(box([9.6, 18, 25], 1, materials.chip), new Vector3(SEAM_X, BASE + domeHeight(SEAM_X, WHEEL.z), WHEEL.z).addScaledVector(wellNormal, -9.4), wellNormal);
+      part("panels", [0, 96, 0], [0.1, 0.36], leftPanel.group, rightPanel.group, liner([...leftKey, ...rightKey]), well, ...leds);
+
+      const wheelTop = BASE + domeHeight(SEAM_X, WHEEL.z) + WHEEL.rise;
+      const wheelCenter = new Vector3(SEAM_X, wheelTop - WHEEL.radius, WHEEL.z);
+      const scrollWheel = new THREE.Mesh(new THREE.CylinderGeometry(WHEEL.radius, WHEEL.radius, WHEEL.width, 64), [
+        materials.knurl,
+        materials.metal,
+        materials.metal,
+      ]);
+      scrollWheel.name = "scroll-wheel";
+      const wheelAxle = new THREE.Group();
+      wheelAxle.position.copy(wheelCenter);
+      wheelAxle.rotation.z = Math.PI / 2;
+      wheelAxle.add(scrollWheel);
+      const dpiAt = new Vector3(SEAM_X, BASE + domeHeight(SEAM_X, -17), -17);
+      const dpiNormal = surfaceNormal(SEAM_X, -17);
+      const dpi = place(box([5.6, 3, 10], 1.4, materials.plastic), dpiAt.clone().addScaledVector(dpiNormal, 0.4), dpiNormal);
+      const dpiLabel = new THREE.Mesh(new THREE.PlaneGeometry(4, 8), new THREE.MeshBasicMaterial({ map: labelTexture("DPI"), transparent: true }));
+      dpiLabel.rotation.set(-Math.PI / 2, 0, -Math.PI / 2);
+      dpiLabel.position.y = 1.52;
+      dpi.add(dpiLabel);
+      part("wheel", [0, 128, 0], [0.12, 0.4], wheelAxle, dpi);
+
+      const forward = onWall(-7, 22);
+      const back = onWall(9, 22);
+      const thumbWheelHit = onWall(-3, 31);
+      const switchHit = onWall(14, 31);
+      const tipHit = hit(new Vector3(-49, BASE + 9, -40), new Vector3(0, 0, 1), shell.outside);
+      const sideKey = ({ point, normal }) => place(box([3.5, 6.5, 14], 1.7, materials.plastic), point.clone().addScaledVector(normal, 0.6), normal, new Vector3(-1, 0, 0));
+      const thumbWheel = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, 5, 64), [
+        materials.grip,
+        materials.rubber,
+        materials.rubber,
+      ]);
+      thumbWheel.name = "thumb-wheel";
+      const thumbAxis = new Vector3(0, 1, 0).addScaledVector(thumbWheelHit.normal, -thumbWheelHit.normal.y).normalize();
+      const thumbHolder = place(new THREE.Group(), thumbWheelHit.point.clone().addScaledVector(thumbWheelHit.normal, -(9 - 2.2)), thumbAxis);
+      thumbHolder.add(thumbWheel);
+      const switchKey = place(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 2.4, 32), materials.plastic), switchHit.point.clone().addScaledVector(switchHit.normal, 0.5), switchHit.normal);
+      const tipKey = place(box([5, 9, 10], 2, materials.plastic), tipHit.point.clone().addScaledVector(tipHit.normal, 0.8), tipHit.normal, new Vector3(0, 0, -1));
+      part("side", [-22, 58, 0], [0.2, 0.46], Object.assign(sideKey(forward), { name: "forward" }), Object.assign(sideKey(back), { name: "back" }), thumbHolder, switchKey, Object.assign(tipKey, { name: "thumb-button" }));
+
+      const callouts = [
+        { part: "wheel", at: new Vector3(SEAM_X, wheelTop, WHEEL.z), side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
+        { part: "wheel", at: new Vector3(SEAM_X, wheelCenter.y, WHEEL.z - WHEEL.radius), side: "left", caption: "Wheel click", value: "Middle click" },
+        { part: "panels", at: new Vector3(20, BASE + domeHeight(20, -35), -35), side: "left", caption: "Right click", value: "Mission Control" },
+        { part: "shell", at: new Vector3(8, BASE + domeHeight(8, 24), 24), side: "left", caption: "Per-app settings", value: "Different in Arc" },
+        { part: "board", at: memory, side: "left", caption: "Mouse memory", value: "Never written to" },
+        { part: "side", at: thumbWheelHit.point.clone().addScaledVector(thumbWheelHit.normal, 2.2), side: "right", caption: "Thumb wheel", value: "Scroll sideways" },
+        { part: "side", at: forward.point.clone().addScaledVector(forward.normal, 2.4), side: "right", caption: "Forward", value: "Desktop on the right" },
+        { part: "side", at: back.point.clone().addScaledVector(back.normal, 2.4), side: "right", caption: "Back", value: "Tap back, hold previous tab" },
+        { part: "side", at: tipHit.point.clone().addScaledVector(tipHit.normal, 2), side: "right", caption: "Thumb button", value: "Full screen" },
+        { part: "base", at: lens, side: "left", caption: "Connected · 1ea7:0067", value: "Settings stay with this mouse" },
+      ];
+
+      const partByName = Object.fromEntries(parts.map((entry) => [entry.name, entry]));
+      const scene = new THREE.Scene();
+      parts.forEach(({ group }) => scene.add(group));
+
+      const studio = (target, stageScene) => {
+        const studioRenderer = new THREE.WebGLRenderer({ canvas: target, antialias: true, alpha: true });
+        studioRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        stageScene.environment = new THREE.PMREMGenerator(studioRenderer).fromScene(new RoomEnvironment(), 0.04).texture;
+        stageScene.environmentIntensity = 0.75;
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+        keyLight.position.set(-60, 140, -40);
+        stageScene.add(keyLight);
+        return studioRenderer;
+      };
+      const renderer = studio(canvas, scene);
+
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 2000);
+      const eye = new Vector3(-1, 0.95, -0.8).setLength(800);
+      camera.position.copy(eye);
+      camera.lookAt(0, 0, 0);
+      camera.updateMatrixWorld();
+      const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+      const up = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+      const view = camera.matrixWorldInverse.clone();
+
+      svg.innerHTML = callouts.map(() => `<g class="xr-leader"><line/><circle r="4.5"/></g>`).join("");
+      const leaders = [...svg.querySelectorAll(".xr-leader")];
+      callouts.forEach((callout, index) => {
+        const label = document.createElement("div");
+        label.className = `xray-label is-${callout.side}`;
+        label.innerHTML = `<span>${callout.caption}</span><strong>${callout.value}</strong>`;
+        labelHost.append(label);
+        callout.label = label;
+        callout.leader = leaders[index];
+        callout.line = leaders[index].querySelector("line");
+        callout.dot = leaders[index].querySelector("circle");
+      });
+
+      const pose = (progress, time) => {
+        parts.forEach((entry) => {
+          const [from, to] = entry.window;
+          entry.local = ease(clamp((progress - from) / (to - from), 0, 1));
+          const bob = reducedMotion || !entry.explode.y ? 0 : Math.sin(time / 700 + entry.explode.y / 15) * 1.2 * entry.local;
+          entry.group.position.copy(entry.explode).multiplyScalar(entry.local).setY(entry.explode.y * entry.local + bob);
+        });
+        partByName.board.group.visible = partByName.panels.local > 0;
+      };
+
+      const corner = new Vector3();
+      const footprint = (root, viewMatrix) => {
+        const bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+        root.updateMatrixWorld(true);
+        root.traverse((object) => {
+          if (!object.isMesh) return;
+          const position = object.geometry.attributes.position;
+          for (let index = 0; index < position.count; index += 7) {
+            corner.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld).applyMatrix4(viewMatrix);
+            bounds.minX = Math.min(bounds.minX, corner.x);
+            bounds.maxX = Math.max(bounds.maxX, corner.x);
+            bounds.minY = Math.min(bounds.minY, corner.y);
+            bounds.maxY = Math.max(bounds.maxY, corner.y);
+          }
+        });
+        return bounds;
+      };
+
+      let metrics = null;
+
+      const measure = () => {
+        const width = stage.clientWidth;
+        const height = stage.clientHeight;
+        renderer.setSize(width, height, false);
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        Object.assign(camera, { left: -width / 2, right: width / 2, top: height / 2, bottom: -height / 2 });
+        const labelWidth = callouts[0].label.offsetWidth;
+        callouts.forEach((callout) => { callout.height = callout.label.offsetHeight; });
+        pose(0, 0);
+        const assembled = footprint(scene, view);
+        pose(1, 0);
+        const exploded = footprint(scene, view);
+        const spanOf = (bounds) => ({ width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY });
+        const overlap = width < 640 ? 150 : 60;
+        const explodedScale = Math.max(Math.min((height - 24) / spanOf(exploded).height, (width - 2 * labelWidth + overlap) / spanOf(exploded).width), 0.5);
+        const assembledScale = Math.min(explodedScale * 1.45, (height - 48) / spanOf(assembled).height, (width - 32) / spanOf(assembled).width);
+        metrics = { width, height, labelWidth, explodedScale, assembledScale, assembled, exploded };
+      };
+
+      const scrollProgress = () => {
+        if (reducedMotion) return 1;
+        const travel = section.offsetHeight - window.innerHeight;
+        return travel > 0 ? clamp(-section.getBoundingClientRect().top / travel, 0, 1) : 1;
+      };
+
+      const layoutColumn = (entries) => {
+        entries.sort((first, second) => first.anchorY - second.anchorY);
+        let floor = 8;
+        entries.forEach((entry) => {
+          entry.top = Math.max(entry.anchorY - entry.callout.height / 2, floor);
+          floor = entry.top + entry.callout.height + 10;
+        });
+        let ceiling = metrics.height - 8;
+        [...entries].reverse().forEach((entry) => {
+          entry.top = Math.min(entry.top, ceiling - entry.callout.height);
+          ceiling = entry.top - 10;
+        });
+      };
+
+      const anchor = new Vector3();
+
+      const render = (time) => {
+        const { width, height, labelWidth, explodedScale, assembledScale, assembled, exploded } = metrics;
+        const progress = scrollProgress();
+        const explode = ease(clamp((progress - 0.04) / 0.3, 0, 1));
+        const scale = lerp(assembledScale, explodedScale, explode);
+        const minX = lerp(assembled.minX, exploded.minX, explode);
+        const maxX = lerp(assembled.maxX, exploded.maxX, explode);
+        const centerX = (minX + maxX) / 2;
+        const centerY = lerp((assembled.minY + assembled.maxY) / 2, (exploded.minY + exploded.maxY) / 2, explode);
+        camera.zoom = scale;
+        camera.position.copy(eye).addScaledVector(right, centerX).addScaledVector(up, centerY);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld();
+
+        pose(progress, time);
+        const spin = reducedMotion ? 0 : time / 600;
+        scrollWheel.rotation.y = -spin;
+        thumbWheel.rotation.y = spin / 2;
+        renderer.render(scene, camera);
+
+        const placed = callouts.map((callout) => {
+          const entry = partByName[callout.part];
+          anchor.copy(callout.at).add(entry.group.position).project(camera);
+          return {
+            callout,
+            anchorX: ((anchor.x + 1) / 2) * width,
+            anchorY: ((1 - anchor.y) / 2) * height,
+            visible: entry.local > 0.92,
+          };
+        });
+        layoutColumn(placed.filter((entry) => entry.callout.side === "left"));
+        layoutColumn(placed.filter((entry) => entry.callout.side === "right"));
+
+        const mouseLeft = width / 2 + (minX - centerX) * scale;
+        const mouseRight = width / 2 + (maxX - centerX) * scale;
+        placed.forEach(({ callout, anchorX, anchorY, visible, top }) => {
+          const isLeft = callout.side === "left";
+          const left = clamp(isLeft ? mouseLeft - 36 - labelWidth : mouseRight + 36, 0, width - labelWidth);
+          callout.label.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
+          callout.label.classList.toggle("is-on", visible);
+          callout.leader.classList.toggle("is-on", visible);
+          callout.line.setAttribute("x1", anchorX.toFixed(1));
+          callout.line.setAttribute("y1", anchorY.toFixed(1));
+          callout.line.setAttribute("x2", (isLeft ? left + labelWidth : left).toFixed(1));
+          callout.line.setAttribute("y2", (top + callout.height / 2).toFixed(1));
+          callout.dot.setAttribute("cx", anchorX.toFixed(1));
+          callout.dot.setAttribute("cy", anchorY.toFixed(1));
+        });
+
+        cue.style.opacity = String(1 - clamp(progress / 0.06, 0, 1));
+      };
+
+      let running = false;
+      const tick = (time) => {
+        if (!running) return;
+        render(time);
+        requestAnimationFrame(tick);
+      };
+
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        paint();
+        render(performance.now());
+      });
+
+      new ResizeObserver(() => {
+        measure();
+        render(performance.now());
+      }).observe(stage);
+
+      new IntersectionObserver(([entry]) => {
+        const wasRunning = running;
+        running = entry.isIntersecting && !reducedMotion;
+        if (running && !wasRunning) requestAnimationFrame(tick);
+      }).observe(section);
+
+      const heroStage = document.querySelector(".hero-stage");
+      const heroCanvas = heroStage.querySelector(".hero-canvas");
+      const pressCard = heroStage.querySelector(".press-card");
+      const heroScene = new THREE.Scene();
+      const heroRenderer = studio(heroCanvas, heroScene);
+      const model = new THREE.Group();
+      parts.filter(({ name }) => name !== "board").forEach(({ group }) => {
+        const copy = group.clone();
+        copy.position.set(0, 0, 0);
+        model.add(copy);
+      });
+      const pivot = new THREE.Group();
+      model.position.sub(new THREE.Box3().setFromObject(model).getCenter(new Vector3()));
+      pivot.add(model);
+      heroScene.add(pivot);
+
+      const glowing = new Map(["left-key", "right-key", "scroll-wheel", "thumb-wheel", "forward", "back", "thumb-button"].map((name) => {
+        const mesh = model.getObjectByName(name);
+        const copies = [mesh.material].flat().map((original) => {
+          const copy = original.clone();
+          tinted.push([copy, original]);
+          return copy;
+        });
+        mesh.material = Array.isArray(mesh.material) ? copies : copies[0];
+        return [name, { mesh, copies, level: 0, spin: 0 }];
+      }));
+
+      const heroCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 2000);
+      heroCamera.position.copy(eye);
+      heroCamera.lookAt(0, 0, 0);
+      heroCamera.updateMatrixWorld();
+      const heroBounds = footprint(pivot, heroCamera.matrixWorldInverse.clone());
+
+      const fitHero = () => {
+        const width = heroStage.clientWidth;
+        const height = heroStage.clientHeight;
+        heroRenderer.setSize(width, height, false);
+        Object.assign(heroCamera, { left: -width / 2, right: width / 2, top: height / 2, bottom: -height / 2 });
+        heroCamera.zoom = Math.min((width * 0.8) / (heroBounds.maxX - heroBounds.minX), (height * 0.68) / (heroBounds.maxY - heroBounds.minY));
+        heroCamera.position.copy(eye)
+          .addScaledVector(right, (heroBounds.minX + heroBounds.maxX) / 2)
+          .addScaledVector(up, (heroBounds.minY + heroBounds.maxY) / 2 - 28 / heroCamera.zoom);
+        heroCamera.updateProjectionMatrix();
+        heroCamera.updateMatrixWorld();
+      };
+
+      const lead = "Whisker could make it";
+      const inputs = {
+        left: { target: "left-key", keys: ["Button 1"], caption: "Left click", lead: "Whisker keeps it as", value: "Left click, always" },
+        right: { target: "right-key", keys: ["Button 2"], caption: "Right click", lead, value: "Mission Control" },
+        middle: { target: "scroll-wheel", keys: ["Button 3"], caption: "Wheel click", lead, value: "Show Desktop" },
+        back: { target: "back", keys: ["Button 4"], caption: "Back", lead, value: "Tap back, hold previous tab" },
+        forward: { target: "forward", keys: ["Button 5"], caption: "Forward", lead, value: "Desktop on the right" },
+        scroll: { target: "scroll-wheel", keys: ["Scroll"], caption: "Scroll wheel", lead, value: "Reversed, mouse only" },
+        sideways: { target: "thumb-wheel", keys: ["Scroll sideways"], caption: "Thumb wheel", lead, value: "Volume up and down" },
+        backKeys: { target: "back", keys: ["⌃", "←"], caption: "Back", lead, value: "Tap back, hold previous tab" },
+        forwardKeys: { target: "forward", keys: ["⌃", "→"], caption: "Forward", lead, value: "Desktop on the right" },
+        thumbKeys: { target: "thumb-button", keys: ["⌃", "⌘", "F"], caption: "Thumb button", lead, value: "Gesture: hold and move" },
+      };
+      const buttonInputs = [inputs.left, inputs.middle, inputs.right, inputs.back, inputs.forward];
+
+      let hideCard = 0;
+      const press = (input, amount = 0) => {
+        const target = glowing.get(input.target);
+        target.level = 1;
+        if (!reducedMotion) target.spin = clamp(target.spin + amount * 0.002, -0.4, 0.4);
+        pressCard.innerHTML = `<span class="press-keys">${input.keys.map((key) => `<kbd>${key}</kbd>`).join("")}</span><strong>${input.caption}</strong><span>${input.lead}: ${input.value}</span>`;
+        pressCard.classList.add("is-on");
+        clearTimeout(hideCard);
+        hideCard = setTimeout(() => pressCard.classList.remove("is-on"), 2600);
+      };
+
+      heroStage.addEventListener("mousedown", (event) => {
+        const input = buttonInputs[event.button];
+        if (!input) return;
+        if (event.button !== 0) event.preventDefault();
+        press(input);
+      });
+      heroStage.addEventListener("mouseup", (event) => {
+        if (event.button > 2) event.preventDefault();
+      });
+      heroStage.addEventListener("contextmenu", (event) => event.preventDefault());
+      heroStage.addEventListener("wheel", (event) => {
+        const isSideways = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+        press(isSideways ? inputs.sideways : inputs.scroll, isSideways ? event.deltaX : event.deltaY);
+      }, { passive: true });
+
+      let heroVisible = false;
+      window.addEventListener("keydown", (event) => {
+        if (!heroVisible || !event.ctrlKey) return;
+        const shortcut = event.metaKey
+          ? (event.code === "KeyF" ? inputs.thumbKeys : null)
+          : { ArrowLeft: inputs.backKeys, ArrowRight: inputs.forwardKeys }[event.key];
+        if (shortcut) press(shortcut);
+      });
+
+      const tilt = { x: 0, y: 0, targetX: 0, targetY: 0 };
+      const heroSection = document.querySelector(".hero");
+      heroSection.addEventListener("pointermove", (event) => {
+        const bounds = heroStage.getBoundingClientRect();
+        tilt.targetY = clamp((event.clientX - bounds.left - bounds.width / 2) / bounds.width, -1, 1) * 0.35;
+        tilt.targetX = clamp((event.clientY - bounds.top - bounds.height / 2) / bounds.height, -1, 1) * 0.16;
+      });
+      heroSection.addEventListener("pointerleave", () => {
+        tilt.targetX = 0;
+        tilt.targetY = 0;
+      });
+
+      const renderHero = (time) => {
+        const motion = reducedMotion ? 0 : 1;
+        tilt.x = lerp(tilt.x, tilt.targetX * motion, 0.08);
+        tilt.y = lerp(tilt.y, tilt.targetY * motion, 0.08);
+        pivot.rotation.set(tilt.x, tilt.y, 0);
+        pivot.position.y = Math.sin(time / 1100) * 1.5 * motion;
+        glowing.forEach((target) => {
+          target.level = Math.max(0, target.level - 0.025);
+          target.copies.forEach((copy) => {
+            copy.emissive.copy(materials.lens.color);
+            copy.emissiveIntensity = target.level * 0.8;
+          });
+          target.mesh.rotation.y += target.spin;
+          target.spin *= 0.9;
+        });
+        heroRenderer.render(heroScene, heroCamera);
+      };
+
+      const heroTick = (time) => {
+        if (!heroVisible) return;
+        renderHero(time);
+        requestAnimationFrame(heroTick);
+      };
+
+      new ResizeObserver(() => {
+        fitHero();
+        renderHero(performance.now());
+      }).observe(heroStage);
+
+      new IntersectionObserver(([entry]) => {
+        const wasVisible = heroVisible;
+        heroVisible = entry.isIntersecting;
+        if (heroVisible && !wasVisible) requestAnimationFrame(heroTick);
+      }).observe(heroStage);
+    };
+
+    try {
+      const THREE = await import("three");
+      const { RoomEnvironment } = await import("three/addons/environments/RoomEnvironment.js");
+      const { RoundedBoxGeometry } = await import("three/addons/geometries/RoundedBoxGeometry.js");
+      start({ THREE, RoomEnvironment, RoundedBoxGeometry });
+    } catch (error) {
+      console.error(error);
+      section.hidden = true;
+      document.querySelector(".hero-stage").hidden = true;
+    }
+  </script>
 </body>
 </html>

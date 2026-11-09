@@ -2,5 +2,7 @@
   "name": "whisker-site",
   "compatibility_date": "2026-11-01",
   "assets": { "directory": "./site" },
-  "routes": [{ "pattern": "whisker.bhargav.dev", "custom_domain": true }]
+  "routes": [{ "pattern": "whisker.bhargav.dev", "custom_domain": true }],
+  "preview_urls": true,
+  "previews": {}
 }

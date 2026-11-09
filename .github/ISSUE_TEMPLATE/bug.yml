@@ -13,7 +13,7 @@ body:
     id: mouse
     attributes:
       label: Mouse and connection
-      placeholder: ISY IWN-5000-1 over USB receiver
+      placeholder: ISY IWM-5000-1 over USB receiver
     validations:
       required: true
   - type: textarea

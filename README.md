@@ -8,9 +8,9 @@ Customize the buttons, wheels and gestures of any mouse on macOS, the way Logite
 
 **Website:** [whisker.bhargav.dev](https://whisker.bhargav.dev)
 
-![Whisker showing an ISY IWN-5000-1 with its buttons labelled](docs/screenshot.png)
+![Whisker showing an ISY IWM-5000-1 with its buttons labelled](docs/screenshot.png)
 
-Whisker started because the ISY IWN-5000-1 ships with extra buttons and a thumb wheel but no software to change what they do. It works with other mice too: if macOS sees a button, Whisker can remap it.
+Whisker started because the ISY IWM-5000-1 ships with extra buttons and a thumb wheel but no software to change what they do. It works with other mice too: if macOS sees a button, Whisker can remap it.
 
 ## What it does
 
@@ -58,7 +58,7 @@ open build/Whisker.app
 
 | Mouse | Profile |
 |---|---|
-| ISY IWN-5000-1 (USB receiver) | [`devices/isy-iwn-5000-1.json`](devices/isy-iwn-5000-1.json) |
+| ISY IWM-5000-1 (USB receiver) | [`devices/isy-iwm-5000-1.json`](devices/isy-iwm-5000-1.json) |
 
 Any other mouse works without a profile: pick it at the top of the window, click **Detect Button**, press a button, and it appears in the window. A profile adds names, positions on the drawing, and support for buttons that send keystrokes.
 
@@ -68,7 +68,7 @@ Profiles live in [`devices/`](devices/), one JSON file per model:
 
 ```json
 {
-  "name": "ISY IWN-5000-1",
+  "name": "ISY IWM-5000-1",
   "devices": ["1ea7:0067"],
   "buttons": [
     { "number": 3, "label": "Back", "position": { "x": 0.1, "y": 0.66 },
