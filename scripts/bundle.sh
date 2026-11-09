@@ -2,14 +2,18 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-swift build -c release
-bin="$(swift build -c release --show-bin-path)"
+archs=(--arch arm64 --arch x86_64)
+swift build -c release "${archs[@]}"
+bin="$(swift build -c release "${archs[@]}" --show-bin-path)"
 
 app="build/Whisker.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin/Whisker" "$app/Contents/MacOS/Whisker"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+if [[ -n "${VERSION:-}" ]]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$app/Contents/Info.plist"
+fi
 cp -R devices "$app/Contents/Resources/Devices"
 
 identity="${SIGN_IDENTITY:-$(security find-identity -v -p codesigning | awk -F'"' '/Apple Development|Developer ID Application/ {print $2; exit}')}"
