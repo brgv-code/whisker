@@ -33,6 +33,7 @@
       --board-side: #125240;
       --board-edge: #3aa886;
       --metal: #c3c7ce;
+      --grain: 0.05;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
@@ -53,6 +54,7 @@
         --board-side: #0e4636;
         --board-edge: #2e9a7b;
         --metal: #a3a8b0;
+        --grain: 0.07;
       }
     }
     :root[data-theme="dark"] {
@@ -73,6 +75,7 @@
       --board-side: #0e4636;
       --board-edge: #2e9a7b;
       --metal: #a3a8b0;
+      --grain: 0.07;
     }
 
     * { box-sizing: border-box; }
@@ -100,16 +103,104 @@
     nav .links a { color: var(--muted); text-decoration: none; }
     nav .links a:hover { color: var(--text); }
 
-    .hero { text-align: center; padding: 64px 0 40px; }
-    .hero h1 {
-      font-size: clamp(36px, 6vw, 60px);
-      line-height: 1.08;
-      letter-spacing: -0.025em;
-      margin: 0 auto 20px;
-      max-width: 820px;
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: 24px;
+      align-items: center;
+      padding: 40px 0 24px;
     }
-    .hero p { color: var(--muted); font-size: 19px; max-width: 620px; margin: 0 auto 32px; }
-    .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hero:has(.hero-stage[hidden]) { grid-template-columns: minmax(0, 1fr); }
+    .hero h1 {
+      font-size: clamp(36px, 5.2vw, 58px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin: 0 0 20px;
+    }
+    .hero-copy > p { color: var(--muted); font-size: 19px; max-width: 520px; margin: 0 0 32px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stars {
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 13px;
+    }
+    .hero-stage { position: relative; aspect-ratio: 1 / 0.9; min-height: 320px; }
+    .hero-stage::before {
+      content: "";
+      position: absolute;
+      inset: 4% 6% 18%;
+      background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+    }
+    .hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .press-card {
+      position: absolute;
+      top: 4%;
+      left: 0;
+      width: 236px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.5);
+      line-height: 1.35;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    .press-card.is-on { opacity: 1; transform: none; }
+    .press-card strong { display: block; font-size: 15px; margin: 6px 0 2px; }
+    .press-card span { display: block; font-size: 13px; color: var(--muted); }
+    .press-keys { display: flex; gap: 4px; }
+    kbd {
+      display: inline-block;
+      min-width: 24px;
+      padding: 2px 7px;
+      font: 600 12px/1.4 "Inter", sans-serif;
+      text-align: center;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-bottom-width: 3px;
+      border-radius: 6px;
+    }
+    .press-hint {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .press-hint span { display: block; font-size: 12.5px; opacity: 0.8; }
+    .code-block { position: relative; }
+    .code-block pre { padding-right: 76px; }
+    .copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      font: 600 12px "Inter", sans-serif;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    .copy:hover { color: var(--text); }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      opacity: var(--grain);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
     .button {
       display: inline-flex;
       align-items: center;
@@ -213,11 +304,16 @@
       gap: 12px;
     }
 
+    @media (hover: none) {
+      .press-card, .press-hint { display: none; }
+    }
     @media (max-width: 820px) {
+      .hero { grid-template-columns: minmax(0, 1fr); }
+      .hero-stage { min-height: 280px; }
       .grid { grid-template-columns: 1fr; }
       .split { grid-template-columns: 1fr; }
       nav .links a.hide-small { display: none; }
-      .hero { padding-top: 32px; }
+      .hero { padding-top: 24px; }
     }
     @media (max-width: 640px) {
       .xray-label { width: 140px; padding: 5px 8px; }
@@ -247,16 +343,24 @@
     </nav>
 
     <header class="hero">
+      <div class="hero-copy">
       <h1>Make every button on your mouse do what you want.</h1>
       <p>Whisker is a free, open source macOS app that remaps the buttons, wheels and gestures of any mouse. Made for the mice that ship without software.</p>
       <div class="actions">
         <a class="button primary" href="https://github.com/brgv-code/whisker">
           <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           View on GitHub
+          <span class="stars" hidden>★ <span></span></span>
         </a>
         <a class="button" href="https://github.com/brgv-code/whisker/releases/latest/download/Whisker.zip">Download for macOS</a>
       </div>
       <div class="meta">macOS 15 or later · MIT licensed</div>
+      </div>
+      <div class="hero-stage">
+        <canvas class="hero-canvas" aria-hidden="true"></canvas>
+        <div class="press-card" aria-live="polite"></div>
+        <p class="press-hint">Point at the mouse, then click, scroll or press a side button.<span>Side button not lighting up? Some mice type a shortcut that macOS keeps to itself. Whisker can still catch it.</span></p>
+      </div>
     </header>
 
     <div class="shot">
@@ -341,10 +445,13 @@
             <li>Grant <strong>Accessibility</strong> and <strong>Input Monitoring</strong> when Whisker asks. It needs them to change what your buttons do and to tell your mice apart.</li>
           </ol>
         </div>
-        <pre><code>git clone https://github.com/brgv-code/whisker.git
+        <div class="code-block">
+          <button class="copy" type="button">Copy</button>
+          <pre><code>git clone https://github.com/brgv-code/whisker.git
 cd whisker
 ./scripts/bundle.sh
 open build/Whisker.app</code></pre>
+        </div>
       </div>
     </section>
 
@@ -358,6 +465,36 @@ open build/Whisker.app</code></pre>
       <a href="https://github.com/brgv-code/whisker">github.com/brgv-code/whisker</a>
     </footer>
   </div>
+  <script>
+    (() => {
+      const stars = document.querySelector(".stars");
+      fetch("https://api.github.com/repos/brgv-code/whisker")
+        .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`GitHub answered ${response.status}`))))
+        .then(({ stargazers_count: count }) => {
+          if (count < 1) return;
+          stars.querySelector("span").textContent = count.toLocaleString("en");
+          stars.hidden = false;
+        })
+        .catch((error) => console.warn("Star count unavailable:", error.message));
+
+      document.querySelectorAll(".code-block").forEach((block) => {
+        const button = block.querySelector(".copy");
+        const code = block.querySelector("code");
+        button.addEventListener("click", () => {
+          navigator.clipboard.writeText(code.textContent).then(
+            () => {
+              button.textContent = "Copied";
+              setTimeout(() => { button.textContent = "Copy"; }, 1600);
+            },
+            () => {
+              getSelection().selectAllChildren(code);
+              button.textContent = "Press ⌘C";
+            },
+          );
+        });
+      });
+    })();
+  </script>
   <script type="importmap">
     {
       "imports": {
@@ -530,10 +667,13 @@ open build/Whisker.app</code></pre>
         grip: new THREE.MeshStandardMaterial({ roughness: 0.9, map: ridgeTexture(64), bumpMap: ridgeTexture(64), bumpScale: 2 }),
       };
 
+      const tinted = [];
+
       const paint = () => {
         const style = getComputedStyle(document.documentElement);
         const tones = { plastic: "--part-top", inside: "--part-side", lining: "--part-side", rubber: "--rubber", grip: "--rubber", metal: "--metal", knurl: "--metal", board: "--board-top", chip: "--chip", trace: "--board-edge", lens: "--accent" };
         Object.entries(tones).forEach(([name, token]) => materials[name].color.setStyle(style.getPropertyValue(token).trim()));
+        tinted.forEach(([copy, original]) => copy.color.copy(original.color));
       };
       paint();
 
@@ -602,7 +742,10 @@ open build/Whisker.app</code></pre>
       const rightKey = keep(keys, ([x]) => SEAM_X + GAP / 2 - x);
 
       const shell = surface([...palm, ...wing]);
-      const panels = surface([...leftKey, ...rightKey]);
+      const leftPanel = surface(leftKey);
+      const rightPanel = surface(rightKey);
+      leftPanel.outside.name = "left-key";
+      rightPanel.outside.name = "right-key";
 
       const caster = new THREE.Raycaster();
       const hit = (origin, direction, target) => {
@@ -610,7 +753,7 @@ open build/Whisker.app</code></pre>
         const [first] = caster.intersectObjects([target].flat(), false);
         return { point: first.point, normal: first.face.normal.clone() };
       };
-      const onWall = (z, height) => hit(new Vector3(-90, BASE + height, z), new Vector3(1, 0, 0), [shell.outside, panels.outside]);
+      const onWall = (z, height) => hit(new Vector3(-90, BASE + height, z), new Vector3(1, 0, 0), [shell.outside, leftPanel.outside, rightPanel.outside]);
 
       const parts = [];
       const part = (name, explode, window, ...meshes) => {
@@ -651,7 +794,7 @@ open build/Whisker.app</code></pre>
       part("shell", [0, 58, 0], [0.18, 0.44], shell.group);
       const wellNormal = surfaceNormal(SEAM_X, WHEEL.z);
       const well = place(box([9.6, 18, 25], 1, materials.chip), new Vector3(SEAM_X, BASE + domeHeight(SEAM_X, WHEEL.z), WHEEL.z).addScaledVector(wellNormal, -9.4), wellNormal);
-      part("panels", [0, 96, 0], [0.1, 0.36], panels.group, liner([...leftKey, ...rightKey]), well, ...leds);
+      part("panels", [0, 96, 0], [0.1, 0.36], leftPanel.group, rightPanel.group, liner([...leftKey, ...rightKey]), well, ...leds);
 
       const wheelTop = BASE + domeHeight(SEAM_X, WHEEL.z) + WHEEL.rise;
       const wheelCenter = new Vector3(SEAM_X, wheelTop - WHEEL.radius, WHEEL.z);
@@ -660,6 +803,7 @@ open build/Whisker.app</code></pre>
         materials.metal,
         materials.metal,
       ]);
+      scrollWheel.name = "scroll-wheel";
       const wheelAxle = new THREE.Group();
       wheelAxle.position.copy(wheelCenter);
       wheelAxle.rotation.z = Math.PI / 2;
@@ -684,11 +828,13 @@ open build/Whisker.app</code></pre>
         materials.rubber,
         materials.rubber,
       ]);
+      thumbWheel.name = "thumb-wheel";
       const thumbAxis = new Vector3(0, 1, 0).addScaledVector(thumbWheelHit.normal, -thumbWheelHit.normal.y).normalize();
-      place(thumbWheel, thumbWheelHit.point.clone().addScaledVector(thumbWheelHit.normal, -(9 - 2.2)), thumbAxis);
+      const thumbHolder = place(new THREE.Group(), thumbWheelHit.point.clone().addScaledVector(thumbWheelHit.normal, -(9 - 2.2)), thumbAxis);
+      thumbHolder.add(thumbWheel);
       const switchKey = place(new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 2.4, 32), materials.plastic), switchHit.point.clone().addScaledVector(switchHit.normal, 0.5), switchHit.normal);
       const tipKey = place(box([5, 9, 10], 2, materials.plastic), tipHit.point.clone().addScaledVector(tipHit.normal, 0.8), tipHit.normal, new Vector3(0, 0, -1));
-      part("side", [-22, 58, 0], [0.2, 0.46], sideKey(forward), sideKey(back), thumbWheel, switchKey, tipKey);
+      part("side", [-22, 58, 0], [0.2, 0.46], Object.assign(sideKey(forward), { name: "forward" }), Object.assign(sideKey(back), { name: "back" }), thumbHolder, switchKey, Object.assign(tipKey, { name: "thumb-button" }));
 
       const callouts = [
         { part: "wheel", at: new Vector3(SEAM_X, wheelTop, WHEEL.z), side: "left", caption: "Scroll wheel", value: "Reversed, mouse only" },
@@ -707,14 +853,17 @@ open build/Whisker.app</code></pre>
       const scene = new THREE.Scene();
       parts.forEach(({ group }) => scene.add(group));
 
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      const environment = new THREE.PMREMGenerator(renderer);
-      scene.environment = environment.fromScene(new RoomEnvironment(), 0.04).texture;
-      scene.environmentIntensity = 0.75;
-      const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
-      keyLight.position.set(-60, 140, -40);
-      scene.add(keyLight);
+      const studio = (target, stageScene) => {
+        const studioRenderer = new THREE.WebGLRenderer({ canvas: target, antialias: true, alpha: true });
+        studioRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        stageScene.environment = new THREE.PMREMGenerator(studioRenderer).fromScene(new RoomEnvironment(), 0.04).texture;
+        stageScene.environmentIntensity = 0.75;
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+        keyLight.position.set(-60, 140, -40);
+        stageScene.add(keyLight);
+        return studioRenderer;
+      };
+      const renderer = studio(canvas, scene);
 
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 2000);
       const eye = new Vector3(-1, 0.95, -0.8).setLength(800);
@@ -749,14 +898,14 @@ open build/Whisker.app</code></pre>
       };
 
       const corner = new Vector3();
-      const footprint = () => {
+      const footprint = (root, viewMatrix) => {
         const bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
-        scene.updateMatrixWorld(true);
-        scene.traverse((object) => {
+        root.updateMatrixWorld(true);
+        root.traverse((object) => {
           if (!object.isMesh) return;
           const position = object.geometry.attributes.position;
           for (let index = 0; index < position.count; index += 7) {
-            corner.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld).applyMatrix4(view);
+            corner.fromBufferAttribute(position, index).applyMatrix4(object.matrixWorld).applyMatrix4(viewMatrix);
             bounds.minX = Math.min(bounds.minX, corner.x);
             bounds.maxX = Math.max(bounds.maxX, corner.x);
             bounds.minY = Math.min(bounds.minY, corner.y);
@@ -777,9 +926,9 @@ open build/Whisker.app</code></pre>
         const labelWidth = callouts[0].label.offsetWidth;
         callouts.forEach((callout) => { callout.height = callout.label.offsetHeight; });
         pose(0, 0);
-        const assembled = footprint();
+        const assembled = footprint(scene, view);
         pose(1, 0);
-        const exploded = footprint();
+        const exploded = footprint(scene, view);
         const spanOf = (bounds) => ({ width: bounds.maxX - bounds.minX, height: bounds.maxY - bounds.minY });
         const overlap = width < 640 ? 150 : 60;
         const explodedScale = Math.max(Math.min((height - 24) / spanOf(exploded).height, (width - 2 * labelWidth + overlap) / spanOf(exploded).width), 0.5);
@@ -883,6 +1032,163 @@ open build/Whisker.app</code></pre>
         running = entry.isIntersecting && !reducedMotion;
         if (running && !wasRunning) requestAnimationFrame(tick);
       }).observe(section);
+
+      const heroStage = document.querySelector(".hero-stage");
+      const heroCanvas = heroStage.querySelector(".hero-canvas");
+      const pressCard = heroStage.querySelector(".press-card");
+      const heroScene = new THREE.Scene();
+      const heroRenderer = studio(heroCanvas, heroScene);
+      const model = new THREE.Group();
+      parts.filter(({ name }) => name !== "board").forEach(({ group }) => {
+        const copy = group.clone();
+        copy.position.set(0, 0, 0);
+        model.add(copy);
+      });
+      const pivot = new THREE.Group();
+      model.position.sub(new THREE.Box3().setFromObject(model).getCenter(new Vector3()));
+      pivot.add(model);
+      heroScene.add(pivot);
+
+      const glowing = new Map(["left-key", "right-key", "scroll-wheel", "thumb-wheel", "forward", "back", "thumb-button"].map((name) => {
+        const mesh = model.getObjectByName(name);
+        const copies = [mesh.material].flat().map((original) => {
+          const copy = original.clone();
+          tinted.push([copy, original]);
+          return copy;
+        });
+        mesh.material = Array.isArray(mesh.material) ? copies : copies[0];
+        return [name, { mesh, copies, level: 0, spin: 0 }];
+      }));
+
+      const heroCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 2000);
+      heroCamera.position.copy(eye);
+      heroCamera.lookAt(0, 0, 0);
+      heroCamera.updateMatrixWorld();
+      const heroBounds = footprint(pivot, heroCamera.matrixWorldInverse.clone());
+
+      const shadowCanvas = document.createElement("canvas");
+      shadowCanvas.width = 128;
+      shadowCanvas.height = 128;
+      const shadowContext = shadowCanvas.getContext("2d");
+      const falloff = shadowContext.createRadialGradient(64, 64, 0, 64, 64, 64);
+      falloff.addColorStop(0, "rgba(0, 0, 0, 0.4)");
+      falloff.addColorStop(1, "rgba(0, 0, 0, 0)");
+      shadowContext.fillStyle = falloff;
+      shadowContext.fillRect(0, 0, 128, 128);
+      const shadow = new THREE.Mesh(new THREE.PlaneGeometry(150, 170), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shadowCanvas), transparent: true, depthWrite: false }));
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(-8, -0.2, 0);
+      model.add(shadow);
+
+      const fitHero = () => {
+        const width = heroStage.clientWidth;
+        const height = heroStage.clientHeight;
+        heroRenderer.setSize(width, height, false);
+        Object.assign(heroCamera, { left: -width / 2, right: width / 2, top: height / 2, bottom: -height / 2 });
+        heroCamera.zoom = Math.min((width * 0.8) / (heroBounds.maxX - heroBounds.minX), (height * 0.68) / (heroBounds.maxY - heroBounds.minY));
+        heroCamera.position.copy(eye)
+          .addScaledVector(right, (heroBounds.minX + heroBounds.maxX) / 2)
+          .addScaledVector(up, (heroBounds.minY + heroBounds.maxY) / 2 - 28 / heroCamera.zoom);
+        heroCamera.updateProjectionMatrix();
+        heroCamera.updateMatrixWorld();
+      };
+
+      const lead = "Whisker could make it";
+      const inputs = {
+        left: { target: "left-key", keys: ["Button 1"], caption: "Left click", lead: "Whisker keeps it as", value: "Left click, always" },
+        right: { target: "right-key", keys: ["Button 2"], caption: "Right click", lead, value: "Mission Control" },
+        middle: { target: "scroll-wheel", keys: ["Button 3"], caption: "Wheel click", lead, value: "Show Desktop" },
+        back: { target: "back", keys: ["Button 4"], caption: "Back", lead, value: "Tap back, hold previous tab" },
+        forward: { target: "forward", keys: ["Button 5"], caption: "Forward", lead, value: "Desktop on the right" },
+        scroll: { target: "scroll-wheel", keys: ["Scroll"], caption: "Scroll wheel", lead, value: "Reversed, mouse only" },
+        sideways: { target: "thumb-wheel", keys: ["Scroll sideways"], caption: "Thumb wheel", lead, value: "Volume up and down" },
+        backKeys: { target: "back", keys: ["⌃", "←"], caption: "Back", lead, value: "Tap back, hold previous tab" },
+        forwardKeys: { target: "forward", keys: ["⌃", "→"], caption: "Forward", lead, value: "Desktop on the right" },
+        thumbKeys: { target: "thumb-button", keys: ["⌃", "⌘", "F"], caption: "Thumb button", lead, value: "Gesture: hold and move" },
+      };
+      const buttonInputs = [inputs.left, inputs.middle, inputs.right, inputs.back, inputs.forward];
+
+      let hideCard = 0;
+      const press = (input, amount = 0) => {
+        const target = glowing.get(input.target);
+        target.level = 1;
+        if (!reducedMotion) target.spin = clamp(target.spin + amount * 0.002, -0.4, 0.4);
+        pressCard.innerHTML = `<span class="press-keys">${input.keys.map((key) => `<kbd>${key}</kbd>`).join("")}</span><strong>${input.caption}</strong><span>${input.lead}: ${input.value}</span>`;
+        pressCard.classList.add("is-on");
+        clearTimeout(hideCard);
+        hideCard = setTimeout(() => pressCard.classList.remove("is-on"), 2600);
+      };
+
+      heroStage.addEventListener("mousedown", (event) => {
+        const input = buttonInputs[event.button];
+        if (!input) return;
+        if (event.button !== 0) event.preventDefault();
+        press(input);
+      });
+      heroStage.addEventListener("mouseup", (event) => {
+        if (event.button > 2) event.preventDefault();
+      });
+      heroStage.addEventListener("contextmenu", (event) => event.preventDefault());
+      heroStage.addEventListener("wheel", (event) => {
+        const isSideways = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+        press(isSideways ? inputs.sideways : inputs.scroll, isSideways ? event.deltaX : event.deltaY);
+      }, { passive: true });
+
+      let heroVisible = false;
+      window.addEventListener("keydown", (event) => {
+        if (!heroVisible || !event.ctrlKey) return;
+        const shortcut = event.metaKey
+          ? (event.code === "KeyF" ? inputs.thumbKeys : null)
+          : { ArrowLeft: inputs.backKeys, ArrowRight: inputs.forwardKeys }[event.key];
+        if (shortcut) press(shortcut);
+      });
+
+      const tilt = { x: 0, y: 0, targetX: 0, targetY: 0 };
+      const heroSection = document.querySelector(".hero");
+      heroSection.addEventListener("pointermove", (event) => {
+        const bounds = heroStage.getBoundingClientRect();
+        tilt.targetY = clamp((event.clientX - bounds.left - bounds.width / 2) / bounds.width, -1, 1) * 0.35;
+        tilt.targetX = clamp((event.clientY - bounds.top - bounds.height / 2) / bounds.height, -1, 1) * 0.16;
+      });
+      heroSection.addEventListener("pointerleave", () => {
+        tilt.targetX = 0;
+        tilt.targetY = 0;
+      });
+
+      const renderHero = (time) => {
+        const motion = reducedMotion ? 0 : 1;
+        tilt.x = lerp(tilt.x, tilt.targetX * motion, 0.08);
+        tilt.y = lerp(tilt.y, tilt.targetY * motion, 0.08);
+        pivot.rotation.set(tilt.x, tilt.y, 0);
+        pivot.position.y = Math.sin(time / 1100) * 1.5 * motion;
+        glowing.forEach((target) => {
+          target.level = Math.max(0, target.level - 0.025);
+          target.copies.forEach((copy) => {
+            copy.emissive.copy(materials.lens.color);
+            copy.emissiveIntensity = target.level * 0.8;
+          });
+          target.mesh.rotation.y += target.spin;
+          target.spin *= 0.9;
+        });
+        heroRenderer.render(heroScene, heroCamera);
+      };
+
+      const heroTick = (time) => {
+        if (!heroVisible) return;
+        renderHero(time);
+        requestAnimationFrame(heroTick);
+      };
+
+      new ResizeObserver(() => {
+        fitHero();
+        renderHero(performance.now());
+      }).observe(heroStage);
+
+      new IntersectionObserver(([entry]) => {
+        const wasVisible = heroVisible;
+        heroVisible = entry.isIntersecting;
+        if (heroVisible && !wasVisible) requestAnimationFrame(heroTick);
+      }).observe(heroStage);
     };
 
     try {
@@ -893,6 +1199,7 @@ open build/Whisker.app</code></pre>
     } catch (error) {
       console.error(error);
       section.hidden = true;
+      document.querySelector(".hero-stage").hidden = true;
     }
   </script>
 </body>
